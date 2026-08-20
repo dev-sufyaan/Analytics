@@ -1,0 +1,12 @@
+{
+  "name": "@aether/tracker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.3"
+  }
+}

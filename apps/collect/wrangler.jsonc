@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aether-collect",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-02-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": {
+    "crons": ["15 0 * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SITE_CACHE",
+      "id": "site_cache_kv"
+    }
+  ]
+}

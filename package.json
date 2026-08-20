@@ -1,0 +1,16 @@
+{
+  "name": "aether",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "dev:collect": "pnpm --filter collect dev",
+    "build": "pnpm --filter @aether/tracker build && pnpm --filter web build",
+    "build:tracker": "pnpm --filter @aether/tracker build",
+    "db:migrate": "node scripts/migrate.mjs"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.7",
+    "postgres": "^3.4.5",
+    "typescript": "^5.7.3"
+  }
+}

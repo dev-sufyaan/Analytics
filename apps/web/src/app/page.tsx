@@ -1,0 +1,587 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  NavBar,
+  NavLink,
+  HeroBandDark,
+  ResearchBandDark,
+  ResearchCard,
+  StatsCardTinted,
+  StatsCardPlain,
+  CodeEditorMockup,
+  ButtonSecondaryMint,
+  ButtonSecondaryWhite,
+  ButtonPrimary,
+  Footer,
+  FooterWordmarkBanner,
+  LiveDot,
+  SegmentedProgressBar,
+  TrendBadge,
+} from '@aether/ui';
+import {
+  Shield,
+  Zap,
+  Database,
+  Check,
+  ArrowRight,
+  Sparkles,
+  Server,
+  Lock,
+  ChevronDown,
+  Globe,
+  Smartphone,
+  Eye,
+  Clock,
+} from 'lucide-react';
+
+export default function MarketingHomePage() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSnippetTab, setActiveSnippetTab] = useState<'nextjs' | 'html' | 'react' | 'event'>('nextjs');
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Simulated live visitors counter for hero widget
+  const [simulatedVisitors, setSimulatedVisitors] = useState(482);
+  const [simulatedViews, setSimulatedViews] = useState(1284);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Gentle live counter tick for demo realism
+    const interval = setInterval(() => {
+      setSimulatedVisitors((prev) => prev + (Math.random() > 0.6 ? 1 : 0));
+      setSimulatedViews((prev) => prev + (Math.random() > 0.4 ? 2 : 0));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const snippets = {
+    nextjs: `// app/layout.tsx (Next.js 14 / 15 App Router)
+import Script from 'next/script';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <Script
+          defer
+          src="https://yourdomain.com/t.js"
+          data-web="13921d15-5a3b-4b3d-ae89-b49255ee3381"
+          strategy="afterInteractive"
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}`,
+    html: `<!-- Standard HTML5 / Static Web Page -->
+<script
+  defer
+  src="https://yourdomain.com/t.js"
+  data-web="13921d15-5a3b-4b3d-ae89-b49255ee3381"
+></script>`,
+    react: `<!-- React / Vite index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script
+      defer
+      src="https://yourdomain.com/t.js"
+      data-web="13921d15-5a3b-4b3d-ae89-b49255ee3381"
+    ></script>
+  </head>
+  <body><div id="root"></div></body>
+</html>`,
+    event: `// Custom Conversion Tracking (e-commerce, signups)
+window.aether.track('checkout_completed', {
+  plan: 'pro_annual',
+  amount: 240,
+  currency: 'USD'
+});`,
+  };
+
+  const faqs = [
+    {
+      q: 'Do I really not need a cookie consent banner?',
+      a: 'Yes, 100%. Because Aether does not use cookies, does not store raw IP addresses, and does not track users across days or separate websites, you are exempt from GDPR, ePrivacy, and CCPA consent banner mandates.',
+    },
+    {
+      q: 'How does Aether count unique visitors without cookies?',
+      a: 'Aether hashes the client IP address, User-Agent, and a cryptographic salt rotated daily at 00:00 UTC at the edge. The raw IP is immediately discarded, leaving an anonymous daily hash that cannot be linked across days.',
+    },
+    {
+      q: 'Will the tracker slow down my website?',
+      a: 'Not at all. The tracker is only 939 bytes gzipped (approx. 45x smaller than Google Analytics 4). It loads asynchronously with the defer attribute and uses the non-blocking browser Beacon API.',
+    },
+    {
+      q: 'Can I track single-page apps (Next.js, React, Vue, SvelteKit)?',
+      a: 'Yes. The tracker automatically intercepts window history (pushState and replaceState) to track pageviews seamlessly on client-side route transitions with zero extra configuration.',
+    },
+    {
+      q: 'Can I share my analytics publicly?',
+      a: 'Yes! Every website comes with an optional public share link (/s/[share_token]) that lets you showcase your live traffic metrics without requiring viewers to sign in or create an account.',
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white text-black flex flex-col justify-between">
+      {/* Dynamic Nav */}
+      <NavBar isScrolled={isScrolled}>
+        <Link href="/" className="flex items-center gap-2 font-display text-[20px] font-medium tracking-tight">
+          <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
+          <span>aether</span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-8 font-display text-[15px]">
+          <NavLink href="#features" onDark={!isScrolled}>Features</NavLink>
+          <NavLink href="#architecture" onDark={!isScrolled}>Architecture</NavLink>
+          <NavLink href="/pricing" onDark={!isScrolled}>Pricing</NavLink>
+          <NavLink href="/docs" onDark={!isScrolled}>Documentation</NavLink>
+          <NavLink href="/design" onDark={!isScrolled}>Design System</NavLink>
+        </nav>
+
+        <div className="flex items-center gap-4">
+          <Link href="/login">
+            <span className={`font-display text-[14px] font-medium transition-colors ${isScrolled ? 'text-black hover:text-black/70' : 'text-white hover:text-white/80'}`}>
+              Sign in
+            </span>
+          </Link>
+          <Link href="/login">
+            <button className="h-9 px-4 rounded-[4px] font-mono text-[12px] uppercase font-medium bg-[#c8f6f9] text-black hover:bg-[#b0f0f4] transition-colors cursor-pointer">
+              GET STARTED
+            </button>
+          </Link>
+        </div>
+      </NavBar>
+
+      {/* Hero Band Dark */}
+      <HeroBandDark>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Headline & CTA */}
+          <div className="lg:col-span-7">
+            <div className="inline-flex items-center gap-2 bg-[#26263a] px-3 py-1 rounded-[4px] mb-6">
+              <LiveDot />
+              <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#bdbbff]">
+                PRIVACY-FIRST ANALYTICS • ZERO COOKIES
+              </span>
+            </div>
+
+            <h1 className="font-display text-[44px] sm:text-[56px] lg:text-[64px] font-medium leading-[1.08] tracking-[-1.92px] text-white mb-6">
+              Simple privacy-first analytics.
+            </h1>
+
+            <p className="font-display text-[18px] md:text-[20px] leading-[28px] text-[#999999] max-w-xl mb-8">
+              No cookies. No fingerprint theatre. A lightweight dashboard you actually enjoy opening. Built for $0 operational cost.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/login">
+                <ButtonSecondaryMint>
+                  GET STARTED FREE
+                </ButtonSecondaryMint>
+              </Link>
+              <Link href="/docs">
+                <ButtonSecondaryWhite>
+                  VIEW DOCUMENTATION
+                </ButtonSecondaryWhite>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Signature 3-Stop Gradient Ribbon Graphic */}
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="w-full max-w-[420px] aspect-square relative rounded-[8px] bg-radial from-[#151538] to-transparent p-6 flex items-center justify-center overflow-hidden">
+              <svg viewBox="0 0 400 400" className="w-full h-full drop-shadow-2xl">
+                <defs>
+                  <linearGradient id="heroRibbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fc4c02" />
+                    <stop offset="50%" stopColor="#ef2cc1" />
+                    <stop offset="100%" stopColor="#bdbbff" />
+                  </linearGradient>
+                  <linearGradient id="heroRibbonGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ef2cc1" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#fc4c02" stopOpacity="0.3" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 60,200 C 60,100 150,60 220,110 C 290,160 340,120 340,220 C 340,320 250,340 180,290 C 110,240 60,300 60,200 Z"
+                  fill="url(#heroRibbonGrad)"
+                  opacity="0.9"
+                />
+                <path
+                  d="M 100,160 C 120,80 240,80 280,160 C 320,240 200,320 130,260 Z"
+                  fill="url(#heroRibbonGrad2)"
+                />
+                <circle cx="200" cy="200" r="45" fill="#010120" stroke="#26263a" strokeWidth="2" />
+                <circle cx="200" cy="200" r="6" fill="#c8f6f9" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </HeroBandDark>
+
+      {/* "Works with" grayscale logo bar */}
+      <div className="w-full border-b border-[#ebebeb] bg-[#fafafa] py-8">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-8">
+          <p className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] text-center mb-6">
+            WORKS SEAMLESSLY WITH EVERY MODERN WEB FRAMEWORK
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-70">
+            <span className="font-display font-medium text-[16px] text-[#71717a]">Next.js</span>
+            <span className="font-display font-medium text-[16px] text-[#71717a]">WordPress</span>
+            <span className="font-display font-medium text-[16px] text-[#71717a]">HTML5 / Vanilla</span>
+            <span className="font-display font-medium text-[16px] text-[#71717a]">Vite / React</span>
+            <span className="font-display font-medium text-[16px] text-[#71717a]">Astro</span>
+            <span className="font-display font-medium text-[16px] text-[#71717a]">SvelteKit</span>
+            <span className="font-display font-medium text-[16px] text-[#71717a]">Remix / Vue</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Live Dashboard Preview Section */}
+      <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-8 w-full">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
+            LIVE INTERACTION
+          </span>
+          <h2 className="font-display text-[36px] md:text-[40px] font-medium tracking-[-0.8px] text-black">
+            The analytics UI you will look forward to checking.
+          </h2>
+          <p className="font-display text-[16px] text-[#71717a] mt-3">
+            Designed for clarity, fast scans, and instant comprehension.
+          </p>
+        </div>
+
+        {/* Live Mockup UI Container */}
+        <div className="border border-[#ebebeb] rounded-[8px] bg-[#fafafa] p-6 md:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-[#ebebeb] gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full bg-[#c8f6f9]" />
+              <div>
+                <span className="font-mono text-[11px] uppercase text-[#71717a] block">DEMO SITE</span>
+                <h4 className="font-display text-[20px] font-medium text-black">saas-app.dev</h4>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#ebebeb] rounded-[4px] font-mono text-[11px] uppercase">
+                <LiveDot />
+                <span>LIVE FEED</span>
+              </span>
+            </div>
+          </div>
+
+          {/* 4 Interactive Mock KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-[#c8f6f9] p-6 rounded-[4px]">
+              <span className="font-mono text-[11px] uppercase text-black/75 block mb-2">VISITORS TODAY</span>
+              <div className="flex items-baseline justify-between">
+                <span className="font-display text-[32px] font-medium tracking-tight text-black">{simulatedVisitors.toLocaleString()}</span>
+                <TrendBadge value="+14.2%" />
+              </div>
+            </div>
+            <div className="bg-[#bdbbff] p-6 rounded-[4px]">
+              <span className="font-mono text-[11px] uppercase text-black/75 block mb-2">TOTAL PAGEVIEWS</span>
+              <div className="flex items-baseline justify-between">
+                <span className="font-display text-[32px] font-medium tracking-tight text-black">{simulatedViews.toLocaleString()}</span>
+                <TrendBadge value="+8.6%" />
+              </div>
+            </div>
+            <div className="bg-white border border-[#ebebeb] p-6 rounded-[4px]">
+              <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-2">BOUNCE RATE</span>
+              <div className="flex items-baseline justify-between">
+                <span className="font-display text-[32px] font-medium tracking-tight text-black">28.4%</span>
+                <span className="font-display text-[13px] text-[#71717a]">48 single views</span>
+              </div>
+            </div>
+            <div className="bg-white border border-[#ebebeb] p-6 rounded-[4px]">
+              <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-2">AVG VISIT TIME</span>
+              <div className="flex items-baseline justify-between">
+                <span className="font-display text-[32px] font-medium tracking-tight text-black">3m 14s</span>
+                <span className="font-display text-[13px] text-[#71717a]">412 sessions</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Two-up Mini Table Previews */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white border border-[#ebebeb] rounded-[4px] p-5">
+              <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-3">TOP PAGES</span>
+              <div className="space-y-2.5 font-display text-[13px]">
+                <div className="flex items-center justify-between p-2 bg-[#f9f9f9] rounded-[3px]">
+                  <span className="truncate flex-1 font-medium">/</span>
+                  <span className="font-mono text-[12px] font-medium">682 views (53%)</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-[#f9f9f9] rounded-[3px]">
+                  <span className="truncate flex-1 font-medium">/pricing</span>
+                  <span className="font-mono text-[12px] font-medium">314 views (24%)</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-[#f9f9f9] rounded-[3px]">
+                  <span className="truncate flex-1 font-medium">/docs/quickstart</span>
+                  <span className="font-mono text-[12px] font-medium">188 views (15%)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#ebebeb] rounded-[4px] p-5">
+              <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-3">HARDWARE RATIO</span>
+              <SegmentedProgressBar
+                segments={[
+                  { label: 'Desktop', value: 68, color: '#000000' },
+                  { label: 'Mobile', value: 28, color: '#bdbbff' },
+                  { label: 'Tablet', value: 4, color: '#c8f6f9' },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mid-Page Key Metric Cards */}
+      <section className="py-16 max-w-[1280px] mx-auto px-4 md:px-8 w-full" id="features">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
+            PERFORMANCE AT SCALE
+          </span>
+          <h2 className="font-display text-[36px] md:text-[40px] font-medium tracking-[-0.8px] text-black">
+            Engineered for speed, privacy, and zero operational overhead.
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <StatsCardTinted
+            label="TRACKER SCRIPT SIZE"
+            value="≤1.5 KB"
+            delta="gzip • 0 dependencies"
+            variant="mint"
+          />
+          <StatsCardTinted
+            label="COOKIES REQUIRED"
+            value="0"
+            delta="100% GDPR compliant"
+            variant="periwinkle"
+          />
+          <StatsCardPlain
+            label="INGEST LATENCY"
+            value="204"
+            delta="Cloudflare edge response"
+          />
+          <StatsCardPlain
+            label="DATABASE COST"
+            value="$0"
+            delta="Supabase Free tier"
+          />
+        </div>
+
+        {/* Live Snippet Mockup with Framework Switcher */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#fafafa] border border-[#ebebeb] rounded-[4px] p-8 md:p-12">
+          <div className="lg:col-span-6">
+            <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
+              ONE-LINE INSTALLATION
+            </span>
+            <h3 className="font-display text-[28px] md:text-[32px] font-medium tracking-[-0.6px] text-black mb-4">
+              Paste once. Done forever.
+            </h3>
+            <p className="font-display text-[15px] leading-[24px] text-[#71717a] mb-6">
+              Just add our featherlight script tag. No complex cookie consent banners, no heavy SDK imports, and no impact on your Core Web Vitals score.
+            </p>
+            <ul className="space-y-3 font-display text-[14px] text-black mb-6">
+              <li className="flex items-center gap-2.5">
+                <Check className="w-4 h-4 text-black shrink-0" />
+                <span>Automatic pageview tracking on SPA navigation</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Check className="w-4 h-4 text-black shrink-0" />
+                <span>Non-blocking Beacon API delivery</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Check className="w-4 h-4 text-black shrink-0" />
+                <span>Custom event tracking via <code className="font-mono text-[12px] bg-[#ebebeb] px-1 py-0.5 rounded">window.aether.track()</code></span>
+              </li>
+            </ul>
+
+            <Link href="/docs">
+              <span className="font-mono text-[11px] uppercase text-black font-medium hover:underline inline-flex items-center gap-1">
+                <span>EXPLORE ALL GUIDES & LIBRARIES</span>
+                <ArrowRight className="w-3 h-3" />
+              </span>
+            </Link>
+          </div>
+
+          <div className="lg:col-span-6">
+            <div className="flex items-center gap-2 mb-3">
+              {(['nextjs', 'html', 'react', 'event'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveSnippetTab(tab)}
+                  className={`px-3 py-1 font-mono text-[11px] uppercase rounded-[3.25px] transition-colors cursor-pointer ${
+                    activeSnippetTab === tab
+                      ? 'bg-black text-white'
+                      : 'bg-white border border-[#ebebeb] text-[#71717a] hover:text-black'
+                  }`}
+                >
+                  {tab === 'nextjs' ? 'NEXT.JS' : tab === 'html' ? 'HTML' : tab === 'react' ? 'REACT' : 'CUSTOM EVENT'}
+                </button>
+              ))}
+            </div>
+            <CodeEditorMockup
+              code={snippets[activeSnippetTab]}
+              title={`${activeSnippetTab.toUpperCase()} CODE`}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Dark Research & Architecture Band */}
+      <ResearchBandDark id="architecture">
+        <div className="mb-12">
+          <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#bdbbff] block mb-2">
+            ARCHITECTURE & ETHICS
+          </span>
+          <h2 className="font-display text-[32px] md:text-[38px] font-medium tracking-[-0.8px] text-white">
+            Why privacy-first architecture matters
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ResearchCard
+            tag="01 // IDENTITY"
+            title="Daily Salted Hashes"
+            description="Visitor hashes rotate daily at 00:00 UTC using cryptographic salting. We cannot track individual humans across multiple days, preserving genuine anonymity."
+          />
+          <ResearchCard
+            tag="02 // INFRASTRUCTURE"
+            title="Instant Edge Ingest"
+            description="Collect endpoints run on Cloudflare Workers. Requests are validated, sanitized, and acknowledged with an instant 204 response without taxing your database."
+          />
+          <ResearchCard
+            tag="03 // OWNERSHIP"
+            title="Complete Data Control"
+            description="Your analytics data lives in your Supabase Postgres database with strict Row Level Security (RLS). You can wipe, export, or audit your data at any time."
+          />
+        </div>
+      </ResearchBandDark>
+
+      {/* Comparison Table Section */}
+      <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-8 w-full">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
+            COMPARISON
+          </span>
+          <h2 className="font-display text-[36px] font-medium tracking-[-0.8px] text-black">
+            How Aether compares
+          </h2>
+        </div>
+
+        <div className="border border-[#ebebeb] rounded-[4px] overflow-x-auto mb-20">
+          <table className="w-full text-left text-[14px]">
+            <thead className="bg-[#f7f7f7] border-b border-[#ebebeb] font-mono text-[11px] uppercase text-[#71717a]">
+              <tr>
+                <th className="p-4">Feature</th>
+                <th className="p-4 bg-black text-white">Aether</th>
+                <th className="p-4">Google Analytics 4</th>
+                <th className="p-4">Standard SaaS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#ebebeb] font-display">
+              <tr>
+                <td className="p-4 font-medium">Script Size</td>
+                <td className="p-4 bg-black/5 font-mono text-[13px] font-medium">≤1.5 KB (939 B)</td>
+                <td className="p-4 text-[#71717a]">~45 KB</td>
+                <td className="p-4 text-[#71717a]">15–30 KB</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">Requires Cookie Banner</td>
+                <td className="p-4 bg-black/5 font-medium">No (Exempt)</td>
+                <td className="p-4 text-[#71717a]">Yes (Mandatory)</td>
+                <td className="p-4 text-[#71717a]">Usually</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">IP Address Storage</td>
+                <td className="p-4 bg-black/5 font-medium">Never (dropped at edge)</td>
+                <td className="p-4 text-[#71717a]">Processed by Google</td>
+                <td className="p-4 text-[#71717a]">Often stored</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">Public Share Links</td>
+                <td className="p-4 bg-black/5 font-medium">Included</td>
+                <td className="p-4 text-[#71717a]">No</td>
+                <td className="p-4 text-[#71717a]">Paid tier only</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">Hosting Cost</td>
+                <td className="p-4 bg-black/5 font-mono text-[13px] font-medium">$0 (Free tier)</td>
+                <td className="p-4 text-[#71717a]">Free (Ad monetization)</td>
+                <td className="p-4 text-[#71717a]">$10–$50 / month</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Frequently Asked Questions Accordion */}
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
+              FAQ
+            </span>
+            <h3 className="font-display text-[28px] md:text-[34px] font-medium tracking-[-0.6px] text-black">
+              Frequently Asked Questions
+            </h3>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className="border border-[#ebebeb] rounded-[4px] overflow-hidden bg-white transition-colors"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-[#fafafa]"
+                  >
+                    <span className="font-display text-[16px] font-medium text-black">{faq.q}</span>
+                    <ChevronDown className={`w-4 h-4 text-[#71717a] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 font-display text-[14px] leading-[22px] text-[#71717a] border-t border-[#ebebeb] pt-4">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CTA Banner */}
+        <div className="mt-20 bg-[#010120] text-white rounded-[4px] p-8 md:p-12 text-center border border-[#26263a]">
+          <h3 className="font-display text-[28px] md:text-[36px] font-medium tracking-[-0.8px] mb-4">
+            Start tracking your website in under 2 minutes.
+          </h3>
+          <p className="font-display text-[15px] text-[#999999] max-w-lg mx-auto mb-8">
+            Create your account, add your domain, and enjoy clean analytics.
+          </p>
+          <Link href="/login">
+            <ButtonSecondaryMint>
+              CREATE FREE ACCOUNT
+            </ButtonSecondaryMint>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer & Wordmark */}
+      <Footer />
+      <FooterWordmarkBanner />
+    </div>
+  );
+}
