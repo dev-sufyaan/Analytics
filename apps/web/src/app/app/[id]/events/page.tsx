@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback, use, useMemo } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@analytics/db/client';
 import type { TopEvent } from '@analytics/db/types';
-import { rangeWindow, RANGE_OPTIONS } from '@analytics/db/range';
+import { peekOverview, loadOverview } from '@analytics/db/overview-store';
+import { RANGE_OPTIONS } from '@analytics/db/range';
 import type { DashboardRange } from '@analytics/db/types';
 import {
   PanelCard,
@@ -35,25 +36,26 @@ export default function EventsBreakdownPage({ params }: { params: Promise<{ id: 
   const [customPropVal, setCustomPropVal] = useState('pro');
   const [sendingTest, setSendingTest] = useState(false);
 
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { start, end } = rangeWindow(range);
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_top_events', {
-        p_website_id: websiteId,
-        p_start: start.toISOString(),
-        p_end: end.toISOString(),
-        p_limit: 100,
-      });
-      if (rpcError) throw new Error(rpcError.message);
-      setEvents((data as TopEvent[]) ?? []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load events.');
-    } finally {
-      setLoading(false);
-    }
-  }, [range, websiteId, supabase]);
+  const fetchEvents = useCallback(
+    async (force = false) => {
+      setError(null);
+      // Shared store: instant paint from cache when warm; zero extra requests
+      // within the TTL after visiting the overview.
+      const peek = force ? null : peekOverview(websiteId, range, null);
+      if (!peek) setLoading(true);
+      else setEvents((peek.data.events as TopEvent[]) ?? []);
+      try {
+        if (peek?.fresh && !force) return;
+        const data = await loadOverview(supabase, websiteId, range, { limit: 100 });
+        setEvents((data.events as TopEvent[]) ?? []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load events.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [range, websiteId, supabase],
+  );
 
   useEffect(() => {
     fetchEvents();
@@ -76,7 +78,8 @@ export default function EventsBreakdownPage({ params }: { params: Promise<{ id: 
       };
       await fetch('/c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       setToastMsg(`Test event '${payload.n}' sent!`);
-      setTimeout(fetchEvents, 1000);
+      // force=true: the just-sent event must bypass the fresh shared cache.
+      setTimeout(() => fetchEvents(true), 1000);
     } catch (e: any) {
       setToastMsg(e.message || 'Error triggering test event');
     } finally {
@@ -103,7 +106,7 @@ window.analytics.track('${customEventName || 'event_name'}', {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <TogglePillGroup options={RANGE_OPTIONS} value={range} onChange={setRange} />
-          <ButtonOutline onClick={fetchEvents} className="px-3" aria-label="Refresh">
+          <ButtonOutline onClick={() => fetchEvents(true)} className="px-3" aria-label="Refresh">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </ButtonOutline>
         </div>
@@ -122,7 +125,7 @@ window.analytics.track('${customEventName || 'event_name'}', {
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-[4px] flex items-center justify-between gap-3">
               <span className="flex items-center gap-2 font-display text-[13px] text-red-900"><AlertCircle className="w-4 h-4" /> {error}</span>
-              <ButtonOutline type="button" onClick={fetchEvents} className="h-7 px-2.5 text-[11px]">RETRY</ButtonOutline>
+              <ButtonOutline type="button" onClick={() => fetchEvents(true)} className="h-7 px-2.5 text-[11px]">RETRY</ButtonOutline>
             </div>
           )}
 

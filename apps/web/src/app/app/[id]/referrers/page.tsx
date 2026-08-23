@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback, use, useMemo } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@analytics/db/client';
 import type { TopReferrer } from '@analytics/db/types';
-import { rangeWindow, RANGE_OPTIONS } from '@analytics/db/range';
+import { peekOverview, loadOverview } from '@analytics/db/overview-store';
+import { RANGE_OPTIONS } from '@analytics/db/range';
 import type { DashboardRange } from '@analytics/db/types';
 import {
   PanelCard,
@@ -28,25 +29,26 @@ export default function ReferrersBreakdownPage({ params }: { params: Promise<{ i
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchReferrers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { start, end } = rangeWindow(range);
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_top_referrers', {
-        p_website_id: websiteId,
-        p_start: start.toISOString(),
-        p_end: end.toISOString(),
-        p_limit: 500,
-      });
-      if (rpcError) throw new Error(rpcError.message);
-      setReferrers((data as TopReferrer[]) ?? []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load referrers.');
-    } finally {
-      setLoading(false);
-    }
-  }, [range, websiteId, supabase]);
+  const fetchReferrers = useCallback(
+    async (force = false) => {
+      setError(null);
+      // Shared store: instant paint from cache when warm; zero extra requests
+      // within the TTL after visiting the overview.
+      const peek = force ? null : peekOverview(websiteId, range, null);
+      if (!peek) setLoading(true);
+      else setReferrers((peek.data.referrers as TopReferrer[]) ?? []);
+      try {
+        if (peek?.fresh && !force) return;
+        const data = await loadOverview(supabase, websiteId, range, { limit: 100 });
+        setReferrers((data.referrers as TopReferrer[]) ?? []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load referrers.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [range, websiteId, supabase],
+  );
 
   useEffect(() => {
     fetchReferrers();
@@ -82,7 +84,7 @@ export default function ReferrersBreakdownPage({ params }: { params: Promise<{ i
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <TogglePillGroup options={RANGE_OPTIONS} value={range} onChange={setRange} />
-          <ButtonOutline onClick={fetchReferrers} className="px-3" aria-label="Refresh">
+          <ButtonOutline onClick={() => fetchReferrers(true)} className="px-3" aria-label="Refresh">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </ButtonOutline>
         </div>
@@ -110,7 +112,7 @@ export default function ReferrersBreakdownPage({ params }: { params: Promise<{ i
             <span className="flex items-center gap-2 font-display text-[13px] text-red-900">
               <AlertCircle className="w-4 h-4" /> {error}
             </span>
-            <ButtonOutline type="button" onClick={fetchReferrers} className="h-7 px-2.5 text-[11px]">
+            <ButtonOutline type="button" onClick={() => fetchReferrers(true)} className="h-7 px-2.5 text-[11px]">
               RETRY
             </ButtonOutline>
           </div>

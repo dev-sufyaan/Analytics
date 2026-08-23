@@ -131,6 +131,12 @@ export interface TopChannel {
   visitors: number;
 }
 
+export interface AiSourceRow {
+  source: string;
+  pageviews: number;
+  visitors: number;
+}
+
 export interface TopUtmMedium {
   utm_medium: string;
   pageviews: number;
@@ -169,6 +175,7 @@ export interface DashboardOverview {
   devices: TopDevices;
   events: TopEvent[];
   channels: TopChannel[];
+  ai_sources?: AiSourceRow[];
   filtered_by: DashboardFilter | null;
   generated_at: string;
 }

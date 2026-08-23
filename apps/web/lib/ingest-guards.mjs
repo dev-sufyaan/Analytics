@@ -348,6 +348,36 @@ export function getReferrerDetails(referrer, siteDomain) {
   }
 }
 
+// ---- AI chatbot referrer classification (Core 5) ---------------------------
+// Canonical source labels for known AI assistant referral hosts. Matching is
+// case-insensitive and covers subdomains via dot-boundary suffix (so
+// chat.openai.com -> chatgpt, but notchatgpt.com does NOT match).
+//
+// KNOWN LIMITATION (accepted): Google AI Overview clicks arrive with a plain
+// www.google.com referrer — indistinguishable from organic search client-side.
+// They stay classified as regular google.com referrals rather than guessing.
+export const AI_SOURCES = {
+  chatgpt: ['chatgpt.com', 'openai.com'],
+  perplexity: ['perplexity.ai'],
+  gemini: ['gemini.google.com'],
+  claude: ['claude.ai'],
+  copilot: ['copilot.microsoft.com'],
+};
+
+const AI_SOURCE_HOSTS = Object.entries(AI_SOURCES).flatMap(([source, hosts]) =>
+  hosts.map((h) => [h.toLowerCase(), source]),
+);
+
+export function classifyAiSource(referrerDomain) {
+  if (!referrerDomain || typeof referrerDomain !== 'string') return null;
+  const host = referrerDomain.trim().toLowerCase();
+  if (!host) return null;
+  for (const [h, source] of AI_SOURCE_HOSTS) {
+    if (host === h || host.endsWith('.' + h)) return source;
+  }
+  return null;
+}
+
 // ---- Salt rotation helpers (Umami crypto.ts:getSalt) -----------------------
 function startOfDayUTC(d) {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -532,6 +562,8 @@ export function buildEventParams(raw, site, ctx) {
   // UTM + click IDs from url_query (e.g. ?utm_source=google&gclid=xyz)
   const utm = extractUtmParams(raw.q);
   const refDetails = getReferrerDetails(raw.r, site.domain);
+  // AI chatbot source tag (chatgpt / perplexity / gemini / claude / copilot)
+  const aiSource = classifyAiSource(refDetails.domain);
 
   return {
     type: 'event',
@@ -550,6 +582,7 @@ export function buildEventParams(raw, site, ctx) {
       p_url_query: str(raw.q, LIMITS.QUERY),
       p_title: finalTitle,
       p_referrer_domain: refDetails.domain,
+      p_referrer_source: aiSource,
       p_referrer_path: refDetails.path,
       p_referrer_query: refDetails.query,
       p_utm_source: utm.utm_source,
@@ -575,6 +608,77 @@ export function extractEvents(payload) {
   if (Array.isArray(payload)) return payload.slice(0, LIMITS.MAX_BATCH).filter((e) => e && typeof e === 'object');
   if (payload && typeof payload === 'object') return [payload];
   return [];
+}
+
+// ---- Build the ONE-request batch body for the ingest_events RPC.
+// `calls` must be validated, non-empty buildEventParams outputs that all share
+// the same website id (the collect endpoints enforce homogeneity before this).
+// Each element drops p_website_id (hoisted to the top level) and tags its type;
+// the RPC restores identical semantics to N sequential legacy calls.
+export function buildBatchRequest(calls) {
+  if (!Array.isArray(calls) || calls.length === 0 || !calls[0].payload) return null;
+  const websiteId = calls[0].payload.p_website_id;
+  const elements = calls.map((c) => {
+    const { p_website_id, ...rest } = c.payload;
+    return { type: c.type === 'heartbeat' ? 'heartbeat' : 'event', ...rest };
+  });
+  return { p_website_id: websiteId, p_events: elements };
+}
+
+// ---- Transport shared by the Cloudflare Worker and the Next.js /c route:
+// try the batched ingest_events RPC first (ONE round trip per beacon); if the
+// RPC is missing (migration pending) or any transient failure occurs, fall
+// back to the legacy per-event fan-out so beacons are never lost during
+// rolling deploys.
+//
+// Returns a health report so callers can record failures:
+//   { mode: 'batch' | 'legacy' | 'none', total: <events attempted>, failed: <n> }
+// Never throws; individual event failures stay non-fatal by design.
+export async function postIngest(supabaseUrl, serviceKey, batchBody, legacyCalls) {
+  const headers = {
+    'Content-Type': 'application/json',
+    apikey: serviceKey,
+    Authorization: `Bearer ${serviceKey}`,
+  };
+
+  if (
+    supabaseUrl &&
+    serviceKey &&
+    batchBody &&
+    Array.isArray(batchBody.p_events) &&
+    batchBody.p_events.length > 0
+  ) {
+    try {
+      const res = await fetch(`${supabaseUrl}/rest/v1/rpc/ingest_events`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(batchBody),
+      });
+      if (res.ok) return { mode: 'batch', total: batchBody.p_events.length, failed: 0 };
+    } catch {}
+  }
+
+  // Fallback: legacy per-event RPC fan-out (also the path when batching is
+  // unavailable). Failures are counted, never thrown.
+  if (supabaseUrl && serviceKey && Array.isArray(legacyCalls)) {
+    const results = await Promise.all(
+      legacyCalls.map(async (c) => {
+        try {
+          const r = await fetch(`${supabaseUrl}/rest/v1/rpc/${c.rpc}`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(c.payload),
+          });
+          return r.ok ? 0 : 1;
+        } catch {
+          return 1;
+        }
+      })
+    );
+    return { mode: 'legacy', total: legacyCalls.length, failed: results.reduce((a, b) => a + b, 0) };
+  }
+
+  return { mode: 'none', total: 0, failed: 0 };
 }
 
 export const CORS_HEADERS = {

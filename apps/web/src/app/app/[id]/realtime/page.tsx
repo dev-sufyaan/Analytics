@@ -44,9 +44,11 @@ export default function RealtimePage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     fetchRealtime();
     if (paused) return;
+    // 15s poll (was 5s): 3x fewer requests on free-tier hosting while still
+    // feeling live. Visibility gating pauses everything in background tabs.
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') fetchRealtime();
-    }, 5000);
+    }, 15000);
     const onVisible = () => {
       if (document.visibilityState === 'visible') fetchRealtime();
     };
@@ -70,7 +72,7 @@ export default function RealtimePage({ params }: { params: Promise<{ id: string 
             </Link>
             {!paused && <LiveDot />}
             <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a]">
-              {paused ? 'PAUSED' : 'LIVE · UPDATES EVERY 5S'}
+              {paused ? 'PAUSED' : 'LIVE · UPDATES EVERY 15S'}
             </span>
             {lastUpdated && !paused && (
               <span className="font-mono text-[10px] uppercase text-[#999999] hidden sm:inline">

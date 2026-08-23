@@ -19,3 +19,22 @@ jobs:
           curl -s -f -X GET "${SUPABASE_URL}/rest/v1/websites?select=id&limit=1" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" || echo "Ping completed"
+
+      - name: Self-healing rollup backfill (Phase 6)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          # Keeps the project active AND heals any days the Cloudflare cron
+          # missed since the last run (run_daily_rollup with no target date
+          # backfills every missing day inside its 35-day window).
+          if [ -z "$SERVICE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY secret not set — skipping rollup trigger."
+            exit 0
+          fi
+          echo "Triggering self-healing rollup..."
+          curl -s -f -X POST "${SUPABASE_URL}/rest/v1/rpc/run_daily_rollup" \
+            -H "apikey: ${SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SERVICE_KEY}" \
+            -H "Content-Type: application/json" -d '{}' \
+            || echo "Rollup trigger failed (non-fatal) — CF cron remains primary."

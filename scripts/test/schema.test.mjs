@@ -78,7 +78,7 @@ function sig(fn) {
 const fns = extractFunctions(ALL);
 ok(fns.length >= 15, `expected the full RPC surface, found ${fns.length} functions`);
 
-const INGEST = ['ingest_event', 'ingest_heartbeat', 'run_daily_rollup'];
+const INGEST = ['ingest_event', 'ingest_events', 'ingest_heartbeat', 'run_daily_rollup'];
 const USER_FNS = [
   'get_website_stats',
   'get_timeseries',
@@ -179,7 +179,7 @@ const tests = [
       'idx_sessions_visitor',
       'idx_sessions_site_seen',
       'idx_events_site_created',
-      'idx_events_session',
+      'idx_events_session_created', // covering index for per-session lookups
       'idx_events_path',
       'idx_events_referrer',
     ];
@@ -202,11 +202,16 @@ const tests = [
 
   test('CORRECTNESS: bounce = exactly one pageview (pageview_count = 1)', () => {
     const bodies = latestBodies(ALL);
-    for (const name of ['run_daily_rollup', 'private_site_kpis']) {
+    // Since 0008, the rollup day-computation lives in the private_rollup_day
+    // helper called by run_daily_rollup.
+    for (const name of ['private_rollup_day', 'private_site_kpis']) {
       ok(bodies[name], `${name} body extracted`);
       assert(!/pageview_count\s*<=\s*1/.test(bodies[name]), `${name}: legacy <= 1 bounce semantics`);
       ok(/pageview_count\s*=\s*1/.test(bodies[name]), `${name}: pageview_count = 1 semantics`);
     }
+    // Self-heal contract: cron path (NULL date) must backfill missing days.
+    ok(bodies['run_daily_rollup'], 'run_daily_rollup body extracted');
+    ok(/not exists/.test(bodies['run_daily_rollup']), 'run_daily_rollup backfills missing daily_stats days');
   }),
 ];
 

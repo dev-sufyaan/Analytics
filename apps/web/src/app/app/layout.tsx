@@ -1,8 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { createServerClient } from '@analytics/db/server';
-import { getUserWebsites } from '@analytics/db/queries';
 import { redirect } from 'next/navigation';
+import { getRscUser, getRscUserWebsites } from '@/lib/rsc-user';
 import AppShellClient from './AppShellClient';
 
 export const metadata: Metadata = {
@@ -15,14 +14,14 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getRscUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  const websites = await getUserWebsites(supabase);
+  // Request-scoped cached (shared with app/page.tsx — queried once per request).
+  const websites = await getRscUserWebsites();
 
   return (
     <AppShellClient userEmail={user.email || ''} websites={websites}>

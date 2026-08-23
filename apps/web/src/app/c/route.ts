@@ -3,7 +3,8 @@
 // NOTE: agent.md §2/§5/§11 forbids collect-through-Next.js and the service role
 // in the web app. For a Vercel-only deploy this is the accepted, documented
 // deviation (see deployment plan). Blast radius is limited: this handler only
-// ever calls ingest_event / ingest_heartbeat with the service role.
+// ever calls ingest_events (batched) / ingest_event / ingest_heartbeat with
+// the service role.
 //
 // All validation lives in lib/ingest-guards.mjs — shared verbatim with the
 // Cloudflare Worker and the test suite, so every path behaves identically.
@@ -12,6 +13,8 @@ import {
   preflight,
   extractEvents,
   buildEventParams,
+  buildBatchRequest,
+  postIngest,
   requestHost,
   LIMITS,
   CORS_HEADERS,
@@ -113,21 +116,12 @@ export async function POST(request: Request) {
   }
 
   // Ingest in the background (`after` keeps the work alive after the response
-  // on Vercel) so beacons get an instant 204.
+  // on Vercel) so beacons get an instant 204. ONE PostgREST round trip per
+  // beacon (batched ingest_events RPC) with legacy fan-out fallback during
+  // rolling deploys.
+  const batchBody = buildBatchRequest(calls);
   after(async () => {
-    await Promise.all(
-      calls.map((c) =>
-        fetch(`${supabaseUrl}/rest/v1/rpc/${c.rpc}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
-          },
-          body: JSON.stringify(c.payload),
-        }).catch(() => {})
-      )
-    );
+    await postIngest(supabaseUrl, serviceKey, batchBody, calls);
   });
 
   return new NextResponse(null, { status: 204, headers: corsHeaders });

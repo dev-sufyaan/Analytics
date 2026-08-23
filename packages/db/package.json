@@ -13,6 +13,7 @@
     "./server": "./src/server.ts",
     "./middleware": "./src/middleware.ts",
     "./queries": "./src/queries.ts",
+    "./overview-store": "./src/overview-store.ts",
     "./types": "./src/types.ts",
     "./range": "./src/range.ts"
   },

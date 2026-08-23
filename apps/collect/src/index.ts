@@ -1,6 +1,7 @@
 // apps/collect/src/index.ts
 // Analytics by Sufyaan Studio ingest Worker: POST /c (beacons), GET /t.js (tracker), POST
-// /internal/rollup (cron, secret-gated). Validation logic is imported from
+// /internal/rollup (cron, secret-gated), GET /internal/stats (ingest health
+// counters, same secret). Validation logic is imported from
 // apps/web/lib/ingest-guards.mjs so the Worker and the Vercel route can never
 // drift apart, and the served tracker is the REAL built bundle (generated into
 // ./tracker-bundle.ts by packages/tracker/build.mjs).
@@ -9,6 +10,8 @@ import {
   preflight,
   extractEvents,
   buildEventParams,
+  buildBatchRequest,
+  postIngest,
   requestHost,
   LIMITS,
   CORS_HEADERS,
@@ -37,6 +40,63 @@ interface SiteRow {
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
 };
+
+// ---------------------------------------------------------------------------
+// Ingest health observability (Phase 6b).
+//
+// KV-backed, FAILURE-ONLY counters: healthy traffic performs ZERO KV reads or
+// writes — the moment a beacon falls back to legacy fan-out or loses an event,
+// a single rolling key (`ingest_health`) is updated with per-UTC-day totals
+// for the trailing week. A short-lived in-isolate cache absorbs read/write
+// amplification during failure bursts (best-effort counts are fine for a
+// health signal). Exposed via secret-gated GET /internal/stats.
+// ---------------------------------------------------------------------------
+type DayHealth = { events: number; failed: number; fallback?: number };
+
+const HEALTH_KEY = 'ingest_health';
+const HEALTH_TTL_SECONDS = 8 * 86400; // auto-expire after a week of silence
+let healthCache: { at: number; data: Record<string, DayHealth> | null } = { at: 0, data: null };
+
+function utcDay(d: Date = new Date()): string {
+  return d.toISOString().slice(0, 10);
+}
+
+async function recordHealth(
+  env: Env,
+  patch: { events: number; failed: number; fallback?: number },
+): Promise<void> {
+  if (!env.SITE_CACHE) return;
+  const day = utcDay();
+  try {
+    let health = healthCache.data;
+    if (!health || Date.now() - healthCache.at > 60_000) {
+      health = ((await env.SITE_CACHE.get(HEALTH_KEY, 'json')) as Record<string, DayHealth> | null) ?? {};
+    }
+
+    const entry = health[day] ?? { events: 0, failed: 0 };
+    entry.events += patch.events;
+    entry.failed += patch.failed;
+    if (patch.fallback) entry.fallback = (entry.fallback ?? 0) + patch.fallback;
+
+    // Keep only the trailing 7 UTC days.
+    const cutoff = utcDay(new Date(Date.now() - 7 * 86400e3));
+    for (const k of Object.keys(health)) if (k < cutoff) delete health[k];
+    health[day] = entry;
+
+    healthCache = { at: Date.now(), data: health };
+    await env.SITE_CACHE.put(HEALTH_KEY, JSON.stringify(health), { expirationTtl: HEALTH_TTL_SECONDS });
+  } catch {
+    // Observability must never break ingestion.
+  }
+}
+
+async function readHealth(env: Env): Promise<Record<string, DayHealth>> {
+  try {
+    return ((await env.SITE_CACHE?.get(HEALTH_KEY, 'json')) as Record<string, DayHealth> | null) ?? {};
+  } catch {
+    return {};
+  }
+}
 
 function rpcHeaders(serviceKey: string) {
   return { ...JSON_HEADERS, apikey: serviceKey, Authorization: `Bearer ${serviceKey}` };
@@ -92,6 +152,20 @@ export default {
         return new Response(null, { status: 401 });
       }
       return runRollup(env);
+    }
+
+    // 2b. Ingest health: KV-backed failure counters for the trailing week.
+    // Same default-deny secret as /internal/rollup.
+    if (url.pathname === '/internal/stats') {
+      if (!env.ROLLUP_SECRET || request.headers.get('x-rollup-secret') !== env.ROLLUP_SECRET) {
+        return new Response(null, { status: 401 });
+      }
+      if (request.method !== 'GET') return new Response(null, { status: 204 });
+      const health = await readHealth(env);
+      return new Response(
+        JSON.stringify({ ok: true, health, generated_at: new Date().toISOString() }),
+        { headers: JSON_HEADERS }
+      );
     }
 
     // 3. Tracker script — the same built bundle as apps/web/public/t.js.
@@ -171,17 +245,22 @@ export default {
 
       if (calls.length === 0) return new Response(null, { status: 204, headers: corsHeaders });
 
-      // Fire-and-forget: respond 204 immediately, ingest in the background.
+      // ONE PostgREST round trip per beacon (batched ingest_events RPC), with
+      // automatic legacy fan-out fallback during rolling deploys. Failures
+      // and fallbacks are recorded to KV health counters — silently losing
+      // events is no longer invisible.
+      const batchBody = buildBatchRequest(calls);
       ctx.waitUntil(
-        Promise.all(
-          calls.map((c) =>
-            fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${c.rpc}`, {
-              method: 'POST',
-              headers: rpcHeaders(env.SUPABASE_SERVICE_ROLE_KEY),
-              body: JSON.stringify(c.payload),
-            }).catch(() => {})
-          )
-        )
+        (async () => {
+          const report = await postIngest(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, batchBody, calls);
+          if (report.mode === 'legacy' || report.failed > 0) {
+            await recordHealth(env, {
+              events: report.total,
+              failed: report.failed,
+              fallback: report.mode === 'legacy' ? 1 : undefined,
+            });
+          }
+        })()
       );
 
       return new Response(null, { status: 204, headers: corsHeaders });

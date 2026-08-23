@@ -237,18 +237,18 @@ const tests = [
     eq(flatBodies(t).find((b) => b.n === 'heartbeat').d, 120, 'clamped to 120');
   }),
 
-  test('tracker: periodic visible beat keeps presence fresh (45s)', () => {
+  test('tracker: periodic visible beat keeps presence fresh (90s)', () => {
     const t = loadTracker({ 'data-web': 'W' });
     t.flushQueuedTimers();
-    t.advance(45000);
+    t.advance(90000);
     t.tickInterval(); // visible -> beat fires
     t.flushQueuedTimers();
     let hbs = flatBodies(t).filter((b) => b.n === 'heartbeat');
     eq(hbs.length, 1, 'interval beat sent while visible');
-    eq(hbs[0].d, 45, 'delta = 45s');
+    eq(hbs[0].d, 90, 'delta = 90s');
     // hidden tab: interval must NOT beat
     t.sandbox.document.visibilityState = 'hidden';
-    t.advance(45000);
+    t.advance(90000);
     t.tickInterval();
     t.flushQueuedTimers();
     hbs = flatBodies(t).filter((b) => b.n === 'heartbeat');

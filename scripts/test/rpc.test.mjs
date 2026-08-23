@@ -57,6 +57,30 @@ async function heartbeat(websiteId, vh, delta) {
   });
 }
 
+// ---- Batch ingest helpers (element schema mirrors ingest-guards buildBatchRequest)
+async function ingestBatch(websiteId, elements, key) {
+  return rpcRest('ingest_events', { p_website_id: websiteId, p_events: elements }, key);
+}
+function bev(vh, over = {}) {
+  return {
+    type: 'event',
+    p_visitor_hash: vh,
+    p_hostname: 'test.local',
+    p_browser: 'Chrome',
+    p_os: 'Other',
+    p_device: 'Desktop',
+    p_country: 'US',
+    p_url_path: over.path || '/',
+    p_title: over.title || null,
+    p_referrer_domain: over.ref || null,
+    p_event_name: over.event ?? null,
+    p_event_data: over.data || null,
+  };
+}
+function bbeat(vh, delta) {
+  return { type: 'heartbeat', p_visitor_hash: vh, p_delta_seconds: delta };
+}
+
 const tests = [
   test('setup: create test users + sites', async () => {
     userA = await createTestUser(`${label('a')}@test.local`);
@@ -207,6 +231,133 @@ const tests = [
     eq(cur[0].rolled, true, 'quota_month advanced to current month');
   }),
 
+  // ---------------- ingest_events (batched ingest) ----------------
+
+  test('ingest_events: batch stores every event; counter incremented once by accepted count', async () => {
+    const s = await newSite(userA.id);
+    const r = await ingestBatch(s.id, [
+      bev('vhB-a', { path: '/b1', event: null }),
+      bev('vhB-b', { path: '/b2', event: null }),
+      bev('vhB-a', { path: '/b3', event: 'click' }),
+    ]);
+    ok(r.ok, `batch rpc ok: ${r.status} ${r.text.slice(0, 200)}`);
+    const out = JSON.parse(r.text);
+    eq(out.accepted, 3, 'accepted=3');
+    const [w] = await db`select events_this_month from public.websites where id=${s.id}`;
+    eq(Number(w.events_this_month), 3, 'counter = accepted count');
+    const evc = await db`select count(*)::int n from public.website_events where website_id=${s.id}`;
+    eq(evc[0].n, 3, 'three rows stored');
+    const sess = await db`select visitor_hash, pageview_count, event_count from public.sessions where website_id=${s.id} order by visitor_hash`;
+    eq(sess.length, 2, 'two sessions (one per visitor)');
+    const a = sess.find((x) => x.visitor_hash === 'vhB-a');
+    eq(a.pageview_count, 1, 'session A pageview_count=1');
+    eq(a.event_count, 1, 'session A event_count=1');
+  }),
+
+  test('ingest_events: same-path duplicate pageviews within ONE batch are deduped', async () => {
+    const s = await newSite(userA.id);
+    const r = await ingestBatch(s.id, [
+      bev('vh-dup-b', { path: '/dup' }),
+      bev('vh-dup-b', { path: '/dup' }),
+    ]);
+    const out = JSON.parse(r.text);
+    eq(out.accepted, 1, 'accepted=1');
+    eq(out.deduped, 1, 'deduped=1');
+    const evc = await db`select count(*)::int n from public.website_events where website_id=${s.id}`;
+    eq(evc[0].n, 1, 'one row stored');
+    const [sess] = await db`select pageview_count from public.sessions where website_id=${s.id}`;
+    eq(sess.pageview_count, 1, 'pageview_count not double counted');
+    const [w] = await db`select events_this_month from public.websites where id=${s.id}`;
+    eq(Number(w.events_this_month), 1, 'deduped event did not consume quota');
+  }),
+
+  test('REGRESSION(batch): [pageview, custom, pageview] same path keeps all three', async () => {
+    const s = await newSite(userA.id);
+    const r = await ingestBatch(s.id, [
+      bev('vh-ord-b', { path: '/x' }),
+      { ...bev('vh-ord-b', { path: '/x', event: 'click' }) },
+      bev('vh-ord-b', { path: '/x' }),
+    ]);
+    const out = JSON.parse(r.text);
+    eq(out.accepted, 3, 'order preserved inside batch -> all stored');
+    eq(out.deduped, 0, 'nothing wrongly deduped');
+    const [sess] = await db`select pageview_count, event_count from public.sessions where website_id=${s.id}`;
+    eq(sess.pageview_count, 2, 'pageview_count = 2');
+    eq(sess.event_count, 1, 'event_count = 1');
+  }),
+
+  test('ingest_events: quota enforced mid-batch (partial acceptance)', async () => {
+    const s = await newSite(userA.id, { quota: 2 });
+    const r = await ingestBatch(s.id, [
+      bev('vh-q-b1', { path: '/q1' }),
+      bev('vh-q-b2', { path: '/q2' }),
+      bev('vh-q-b3', { path: '/q3' }),
+      bev('vh-q-b4', { path: '/q4' }),
+    ]);
+    const out = JSON.parse(r.text);
+    eq(out.accepted, 2, 'exactly quota accepted');
+    eq(out.dropped, 2, 'rest dropped');
+    const [w] = await db`select events_this_month from public.websites where id=${s.id}`;
+    eq(Number(w.events_this_month), 2, 'counter capped at quota');
+  }),
+
+  test('ingest_events: heartbeats extend duration, never consume quota, unknown visitors ignored', async () => {
+    const s = await newSite(userA.id);
+    // heartbeat for a visitor with NO session -> silent no-op, no session created
+    let r = await ingestBatch(s.id, [bbeat('vh-hb-none', 60)]);
+    let out = JSON.parse(r.text);
+    eq(out.heartbeats, 0, 'unknown-visitor beat is a no-op');
+    const sc = await db`select count(*)::int n from public.sessions where website_id=${s.id}`;
+    eq(sc[0].n, 0, 'heartbeat must not create sessions');
+
+    // real session, then beat
+    await ingestBatch(s.id, [bev('vh-hb-b', { path: '/' })]);
+    r = await ingestBatch(s.id, [bbeat('vh-hb-b', 90), bbeat('vh-hb-b', 200)]);
+    out = JSON.parse(r.text);
+    eq(out.heartbeats, 2, 'both beats applied');
+    const [sess] = await db`select total_duration_seconds from public.sessions where website_id=${s.id}`;
+    eq(sess.total_duration_seconds, 210, '90 + clamped 120 = 210');
+    const [w] = await db`select events_this_month from public.websites where id=${s.id}`;
+    eq(Number(w.events_this_month), 1, 'heartbeats consumed no quota');
+  }),
+
+  test('ingest_events: month rollover resets counter once for the whole batch', async () => {
+    const s = await newSite(userA.id, { quota: 10 });
+    await db`update public.websites set events_this_month = 999999, quota_month = (date_trunc('month', now()) - interval '1 month')::date where id=${s.id}`;
+    const r = await ingestBatch(s.id, [
+      bev('vh-roll-b', { path: '/r1' }),
+      bev('vh-roll-b', { path: '/r2' }),
+      bev('vh-roll-b', { path: '/r3' }),
+    ]);
+    const out = JSON.parse(r.text);
+    eq(out.accepted, 3, 'all accepted after rollover');
+    const [w] = await db`select events_this_month, quota_month from public.websites where id=${s.id}`;
+    eq(Number(w.events_this_month), 3, 'counter reset to exactly accepted count');
+    const cur = await db`select quota_month = date_trunc('month', now())::date as rolled from public.websites where id=${s.id}`;
+    eq(cur[0].rolled, true, 'quota_month advanced');
+  }),
+
+  test('ingest_events: invalid payloads and junk elements are safe + caps enforced', async () => {
+    const s = await newSite(userA.id);
+    // non-array payload
+    let r = await ingestBatch(s.id, 'not-an-array');
+    let out = JSON.parse(r.text);
+    eq(out.accepted, 0, 'non-array rejected');
+    ok(out.reason === 'invalid_payload', 'reason reported');
+    // empty array
+    r = await ingestBatch(s.id, []);
+    out = JSON.parse(r.text);
+    eq(out.accepted, 0, 'empty batch accepted=0');
+    // junk element dropped alone; oversized fields capped on the good one
+    r = await ingestBatch(s.id, ['junk-string-element', bev('vh-junk-b', { path: '/' + 'a'.repeat(5000), title: 'T'.repeat(5000) })]);
+    out = JSON.parse(r.text);
+    eq(out.accepted, 1, 'good element survived junk sibling');
+    eq(out.dropped, 1, 'junk element dropped');
+    const [evRow] = await db`select url_path, title from public.website_events where website_id=${s.id} order by id desc limit 1`;
+    ok(evRow.url_path.length <= 1024, `path capped (${evRow.url_path.length})`);
+    ok((evRow.title || '').length <= 512, `title capped`);
+  }),
+
   test('accuracy: bounce = EXACTLY one pageview; event-only sessions are not bounces', async () => {
     const s = await newSite(userA.id);
     const y = new Date(Date.now() - 86400000);
@@ -354,6 +505,65 @@ const tests = [
     eq(seCount[0].n, 0, 'orphan old session purged');
   }),
 
+  test('SELF-HEAL: cron path ({}) backfills ALL missing days in one call', async () => {
+    const s = await newSite(userA.id);
+    // Simulate a site whose cron missed two nights: events + sessions exist
+    // for day-2 and day-3 but daily_stats has NO rows for them.
+    const d2 = new Date(Date.now() - 2 * 86400000);
+    const d3 = new Date(Date.now() - 3 * 86400000);
+    const day = (dt) => dt.toISOString().slice(0, 10);
+
+    const mkSession = async (vh, when, pv) => {
+      const [r] = await db`insert into public.sessions
+        (website_id, visitor_hash, country, first_seen, last_seen, pageview_count, total_duration_seconds)
+        values (${s.id}, ${vh}, 'US', ${when}, ${when}, ${pv}, 60) returning id`;
+      return r.id;
+    };
+    const sid2 = await mkSession('vh-heal-a', d2, 2);
+    await db`insert into public.website_events (website_id, session_id, url_path, created_at, event_name)
+      values (${s.id}, ${sid2}, '/heal', ${d2}, null), (${s.id}, ${sid2}, '/heal', ${d2}, null)`;
+    const sid3 = await mkSession('vh-heal-b', d3, 1);
+    await db`insert into public.website_events (website_id, session_id, url_path, created_at, event_name)
+      values (${s.id}, ${sid3}, '/heal-old', ${d3}, null)`;
+
+    // Cron-style invocation: NO target date.
+    const r = await rpcRest('run_daily_rollup', {});
+    ok(r.ok, `rollup ok: ${r.status} ${r.text.slice(0, 200)}`);
+    const out = JSON.parse(r.text);
+    ok(out.days_processed >= 2, `backfilled >= 2 days (got ${out.days_processed})`);
+
+    const rows = await db`
+      select day, pageviews, unique_visitors, sessions, bounces, total_duration_seconds
+      from public.daily_stats where website_id=${s.id} and day in (${day(d2)}, ${day(d3)}) order by day`;
+    eq(rows.length, 2, 'both missing days materialized');
+    const byDay = Object.fromEntries(rows.map((x) => [x.day.toISOString().slice(0, 10), x]));
+    eq(Number(byDay[day(d2)].pageviews), 2, 'day-2 pageviews = 2');
+    eq(Number(byDay[day(d3)].pageviews), 1, 'day-3 pageviews = 1');
+    eq(Number(byDay[day(d3)].total_duration_seconds), 60, 'duration from sessions');
+
+    // Idempotent: second cron pass must NOT duplicate or change anything.
+    await rpcRest('run_daily_rollup', {});
+    const again = await db`
+      select count(*)::int n from public.daily_stats where website_id=${s.id} and day in (${day(d2)}, ${day(d3)})`;
+    eq(again[0].n, 2, 'still exactly 2 rows after second run');
+  }),
+
+  test('SELF-HEAL: explicit target date still works (legacy contract)', async () => {
+    const s = await newSite(userA.id);
+    const d4 = new Date(Date.now() - 4 * 86400000);
+    const [se] = await db`insert into public.sessions
+      (website_id, visitor_hash, first_seen, last_seen, pageview_count)
+      values (${s.id}, 'vh-heal-c', ${d4}, ${d4}, 1) returning id`;
+    await db`insert into public.website_events (website_id, session_id, url_path, created_at, event_name)
+      values (${s.id}, ${se.id}, '/legacy', ${d4}, null)`;
+    const r = await rpcRest('run_daily_rollup', { p_target_date: d4.toISOString().slice(0, 10) });
+    ok(r.ok);
+    const rows = await db`
+      select pageviews from public.daily_stats where website_id=${s.id} and day=${d4.toISOString().slice(0, 10)}`;
+    eq(rows.length, 1, 'explicit-day rollup stored');
+    eq(Number(rows[0].pageviews), 1, 'pageviews = 1');
+  }),
+
   test('schema integrity: NO raw IP column anywhere', async () => {
     const rows = await db`select table_name, column_name from information_schema.columns
       where table_schema='public' and (column_name ilike '%ip%' or column_name ilike '%fingerprint%')`;
@@ -382,6 +592,15 @@ const tests = [
       p_website_id: s.id, p_visitor_hash: 'x', p_url_path: '/',
     }, ENV.anonKey);
     assert(!r.ok, `anon ingest should be denied, got ${r.status}`);
+  }),
+
+  test('SECURITY: ingest_events (batch) NOT executable by PUBLIC (anon)', async () => {
+    const s = await newSite(userA.id);
+    const r = await ingestBatch(s.id, [bev('vh-anon-b', { path: '/' })], ENV.anonKey);
+    assert(!r.ok, `anon batch ingest should be denied, got ${r.status}`);
+    // service_role still works (proves denial is grants, not the function)
+    const ok1 = await ingestBatch(s.id, [bev('vh-svc-b', { path: '/' })]);
+    ok(ok1.ok, `service_role batch works: ${ok1.status} ${ok1.text.slice(0, 200)}`);
   }),
 
   test('SECURITY: run_daily_rollup NOT executable by PUBLIC (anon)', async () => {
@@ -436,6 +655,83 @@ const tests = [
       p_end: new Date().toISOString(),
     }, ENV.anonKey);
     assert(!anonFail.ok, 'anon cannot read any site');
+  }),
+
+  test('dashboard payload: panel filter contracts preserved (single-pass rewrite)', async () => {
+    const s = await newSite(userA.id);
+    // v1: /a only. v2: /b then /a.
+    const r0 = await ingestBatch(s.id, [
+      bev('vh-dash-1', { path: '/a' }),
+      bev('vh-dash-2', { path: '/b' }),
+      bev('vh-dash-2', { path: '/a' }),
+    ]);
+    ok(r0.ok, `seed batch ok: ${r0.text.slice(0, 120)}`);
+    const win = () => ({
+      p_start: new Date(Date.now() - 3600e3).toISOString(),
+      p_end: new Date().toISOString(),
+    });
+    const call = (body) => rpcRest('private_dashboard_payload', body);
+
+    // Unfiltered: pages ordered by pageviews desc (/a has 2, /b has 1).
+    let r = await call({ p_website_id: s.id, ...win(), p_interval: 'day', p_prev_start: null, p_prev_end: null, p_filter_type: null, p_filter_value: null, p_limit: 8 });
+    ok(r.ok, `payload ok: ${r.status} ${r.text.slice(0, 200)}`);
+    let payload = JSON.parse(r.text);
+    eq(payload.pages[0].url_path, '/a', '/a is top path unfiltered');
+    eq(Number(payload.pages[0].pageviews), 2, '/a pageviews = 2');
+
+    // CONTRACT (0005): a row-grain panel never restricts by its OWN dimension's
+    // filter — inside a /a drill-down, Top Pages still lists ALL paths.
+    r = await call({ p_website_id: s.id, ...win(), p_interval: 'day', p_prev_start: null, p_prev_end: null, p_filter_type: 'path', p_filter_value: '/a', p_limit: 8 });
+    payload = JSON.parse(r.text);
+    const paths = payload.pages.map((p) => p.url_path).sort();
+    eq(JSON.stringify(paths), JSON.stringify(['/a', '/b']), 'pages panel ignores path filter');
+    eq(Number(payload.stats.pageviews), 2, 'KPIs DO respect the filter');
+    eq(Number(payload.countries[0].visitors), 2, 'countries scoped to sessions containing /a');
+
+    // Referrer drill-down: referrers panel stays global; countries narrows.
+    r = await call({ p_website_id: s.id, ...win(), p_interval: 'day', p_prev_start: null, p_prev_end: null, p_filter_type: 'referrer', p_filter_value: 'Direct / None', p_limit: 8 });
+    payload = JSON.parse(r.text);
+    const domains = payload.referrers.map((x) => x.referrer_domain).sort();
+    eq(JSON.stringify(domains), JSON.stringify(['Direct / None']), 'referrers under own-filter shows all domains (none here)');
+  }),
+
+  test('dashboard payload: ai_sources panel aggregates tagged referrals', async () => {
+    const s = await newSite(userA.id);
+    const mk = async (vh, when) => {
+      const [r] = await db`insert into public.sessions
+        (website_id, visitor_hash, first_seen, last_seen, pageview_count)
+        values (${s.id}, ${vh}, ${when}, ${when}, 1) returning id`;
+      return r.id;
+    };
+    const now = new Date();
+    const s1 = await mk('vh-ai-1', now);
+    const s2 = await mk('vh-ai-2', now);
+    const s3 = await mk('vh-ai-3', now);
+    // two ChatGPT pageviews from one visitor, one Perplexity, one untagged organic
+    await db`insert into public.website_events (website_id, session_id, url_path, referrer_domain, referrer_source, created_at, event_name)
+      values (${s.id}, ${s1}, '/a', 'chatgpt.com', 'chatgpt', ${now}, null),
+             (${s.id}, ${s1}, '/b', 'chatgpt.com', 'chatgpt', ${now}, null),
+             (${s.id}, ${s2}, '/a', 'perplexity.ai', 'perplexity', ${now}, null),
+             (${s.id}, ${s3}, '/c', 'google.com', null, ${now}, null)`;
+
+    const r = await rpcRest('private_dashboard_payload', {
+      p_website_id: s.id,
+      p_start: new Date(Date.now() - 3600e3).toISOString(),
+      p_end: new Date().toISOString(),
+      p_interval: 'day',
+      p_prev_start: null,
+      p_prev_end: null,
+      p_filter_type: null,
+      p_filter_value: null,
+      p_limit: 8,
+    });
+    ok(r.ok, `payload ok: ${r.status} ${r.text.slice(0, 200)}`);
+    const payload = JSON.parse(r.text);
+    const bySource = Object.fromEntries((payload.ai_sources ?? []).map((x) => [x.source, x]));
+    eq(Number(bySource.chatgpt.pageviews), 2, 'chatgpt pageviews = 2');
+    eq(Number(bySource.chatgpt.visitors), 1, 'chatgpt visitors deduped to 1');
+    eq(Number(bySource.perplexity.pageviews), 1, 'perplexity counted');
+    eq(bySource.google, undefined, 'untagged referrers never appear in ai panel');
   }),
 ];
 

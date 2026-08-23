@@ -45,6 +45,16 @@ export declare function isSafeString(s: unknown): boolean;
 export declare function extractUtmParams(queryString: string | null | undefined): Record<string, string | null>;
 export declare function getReferrerDetails(referrer: unknown, siteDomain: string | null): { domain: string | null; path: string | null; query: string | null };
 
+/** Known AI assistant referral hosts -> canonical source labels (Core 5). */
+export declare const AI_SOURCES: Record<string, string[]>;
+/**
+ * Classifies a bare referrer hostname into an AI source label
+ * ('chatgpt' | 'perplexity' | 'gemini' | 'claude' | 'copilot') or null.
+ * Case-insensitive, dot-boundary subdomain matching. Google AI Overview is
+ * intentionally NOT detected (arrives as google.com — indistinguishable).
+ */
+export declare function classifyAiSource(referrerDomain: string | null | undefined): string | null;
+
 export declare const UUID_RE: RegExp;
 export declare function requestHost(request: Request, payloadReferrer: string | null): string;
 
@@ -74,6 +84,33 @@ export interface BuiltCall {
 export declare function buildEventParams(raw: unknown, site: SiteLike, ctx: CtxLike): BuiltCall | null;
 
 export declare function extractEvents(payload: unknown): Record<string, any>[];
+
+/** Body for the batched ingest_events RPC (one PostgREST round trip per beacon). */
+export interface BatchRequestBody {
+  p_website_id: string;
+  p_events: Record<string, unknown>[];
+}
+export declare function buildBatchRequest(calls: BuiltCall[]): BatchRequestBody | null;
+
+/** Health report from postIngest — used by the Worker for KV observability. */
+export interface IngestReport {
+  mode: 'batch' | 'legacy' | 'none';
+  total: number;
+  failed: number;
+}
+
+/**
+ * Sends the beacon to Supabase: tries the batched ingest_events RPC first,
+ * falls back to the legacy per-event fan-out (rolling deploys, transient
+ * failures). Never throws. Returns which path was used and how many events
+ * failed so callers can record health metrics.
+ */
+export declare function postIngest(
+  supabaseUrl: string | undefined,
+  serviceKey: string | undefined,
+  batchBody: BatchRequestBody | null,
+  legacyCalls: BuiltCall[]
+): Promise<IngestReport>;
 
 export declare const CORS_HEADERS: Record<string, string>;
 export declare function getCorsHeaders(request: Request): Record<string, string>;

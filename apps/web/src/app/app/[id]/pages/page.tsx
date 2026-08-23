@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback, use, useMemo } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@analytics/db/client';
 import type { TopPage } from '@analytics/db/types';
-import { rangeWindow, RANGE_OPTIONS } from '@analytics/db/range';
+import { peekOverview, loadOverview } from '@analytics/db/overview-store';
+import { RANGE_OPTIONS } from '@analytics/db/range';
 import type { DashboardRange } from '@analytics/db/types';
 import {
   PanelCard,
@@ -31,25 +32,26 @@ export default function PagesBreakdownPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPages = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { start, end } = rangeWindow(range);
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_top_pages', {
-        p_website_id: websiteId,
-        p_start: start.toISOString(),
-        p_end: end.toISOString(),
-        p_limit: 500,
-      });
-      if (rpcError) throw new Error(rpcError.message);
-      setPages((data as TopPage[]) ?? []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load pages.');
-    } finally {
-      setLoading(false);
-    }
-  }, [range, websiteId, supabase]);
+  const fetchPages = useCallback(
+    async (force = false) => {
+      setError(null);
+      // Shared store: instant paint from cache when warm, ONE request powers
+      // overview + all sub-pages within the TTL.
+      const peek = force ? null : peekOverview(websiteId, range, null);
+      if (!peek) setLoading(true);
+      else setPages((peek.data.pages as TopPage[]) ?? []);
+      try {
+        if (peek?.fresh && !force) return;
+        const data = await loadOverview(supabase, websiteId, range, { limit: 100 });
+        setPages((data.pages as TopPage[]) ?? []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load pages.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [range, websiteId, supabase],
+  );
 
   useEffect(() => {
     fetchPages();
@@ -93,7 +95,7 @@ export default function PagesBreakdownPage({ params }: { params: Promise<{ id: s
 
         <div className="flex flex-wrap items-center gap-3">
           <TogglePillGroup options={RANGE_OPTIONS} value={range} onChange={setRange} />
-          <ButtonOutline onClick={fetchPages} className="px-3" title="Refresh" aria-label="Refresh">
+          <ButtonOutline onClick={() => fetchPages(true)} className="px-3" title="Refresh" aria-label="Refresh">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </ButtonOutline>
         </div>
@@ -121,7 +123,7 @@ export default function PagesBreakdownPage({ params }: { params: Promise<{ id: s
             <span className="flex items-center gap-2 font-display text-[13px] text-red-900">
               <AlertCircle className="w-4 h-4" /> {error}
             </span>
-            <ButtonOutline type="button" onClick={fetchPages} className="h-7 px-2.5 text-[11px] shrink-0">
+            <ButtonOutline type="button" onClick={() => fetchPages(true)} className="h-7 px-2.5 text-[11px] shrink-0">
               RETRY
             </ButtonOutline>
           </div>

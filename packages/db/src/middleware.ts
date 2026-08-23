@@ -30,11 +30,23 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh auth token
-  const { data: { user } } = await supabase.auth.getUser();
+  // PERF: getSession() instead of getUser(). For a VALID session this is a
+  // purely local JWT check — ZERO GoTrue network round trip per navigation
+  // (previously every page/RSC request paid one). When the access token IS
+  // expired it transparently refreshes AND persists the new cookies via the
+  // setAll bridge above, preserving the exact behavior RSC relies on (server
+  // components cannot write cookies themselves).
+  //
+  // SECURITY: middleware is a ROUTING gate only (redirect UX). It does not
+  // verify signatures or authorization — that remains enforced where it
+  // matters: app/layout re-validates with getUser(), and every data path goes
+  // through RLS policies + owner-checked security-definer RPCs.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   // Protect /app routes
-  if (request.nextUrl.pathname.startsWith('/app') && !user) {
+  if (request.nextUrl.pathname.startsWith('/app') && !session) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirect', request.nextUrl.pathname);
@@ -42,7 +54,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect /login to /app if already logged in
-  if (request.nextUrl.pathname === '/login' && user) {
+  if (request.nextUrl.pathname === '/login' && session) {
     const url = request.nextUrl.clone();
     url.pathname = '/app';
     return NextResponse.redirect(url);

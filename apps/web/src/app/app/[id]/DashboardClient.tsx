@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link';
 import { createBrowserClient } from '@analytics/db/client';
 import type { Website, DashboardOverview, DashboardFilter, DashboardRange } from '@analytics/db/types';
-import { getDashboardOverview } from '@analytics/db/queries';
-import { rangeWindow, RANGE_OPTIONS } from '@analytics/db/range';
+import { peekOverview, loadOverview } from '@analytics/db/overview-store';
+import { RANGE_OPTIONS } from '@analytics/db/range';
 import {
   StatsCardTinted,
   StatsCardPlain,
@@ -45,12 +45,17 @@ import {
 } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
 
-// In-memory SWR cache: key -> { data, at }. TTL 30 s fresh, 5 min stale-for-render.
-const CACHE_TTL = 30_000;
-const overviewCache = new Map<string, { data: DashboardOverview; at: number }>();
-function cacheKey(websiteId: string, range: DashboardRange, filter: DashboardFilter | null) {
-  return `${websiteId}|${range}|${filter ? `${filter.type}:${filter.value}` : '_'}`;
-}
+// Shared SWR store (packages/db/src/overview-store.ts) — the same 30s cache
+// powers every breakdown sub-page, so Overview → Pages costs zero requests.
+
+// Friendly labels for AI source tags emitted by the ingest classifier.
+const AI_SOURCE_LABELS: Record<string, string> = {
+  chatgpt: 'ChatGPT',
+  perplexity: 'Perplexity',
+  gemini: 'Gemini',
+  claude: 'Claude',
+  copilot: 'Copilot',
+};
 
 export default function DashboardClient({ website }: { website: Website }) {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -78,17 +83,14 @@ export default function DashboardClient({ website }: { website: Website }) {
     async (opts?: { force?: boolean; silent?: boolean }) => {
       const force = opts?.force ?? false;
       const silent = opts?.silent ?? false;
-      const { start, end, prevStart, prevEnd, interval } = rangeWindow(range);
-      const key = cacheKey(website.id, range, filter);
 
       // Serve stale cache instantly so navigation feels instant.
-      const cached = overviewCache.get(key);
-      const isFresh = cached && Date.now() - cached.at < CACHE_TTL;
-      if (cached && !force) {
-        setOverview(cached.data);
+      const peek = force ? null : peekOverview(website.id, range, filter);
+      if (peek) {
+        setOverview(peek.data);
         setError(null);
         setLoading(false);
-        if (isFresh) return;
+        if (peek.fresh) return;
         // stale-but-present -> background refresh (no spinner, only dim).
         if (!silent) setRefreshing(true);
       } else {
@@ -99,18 +101,11 @@ export default function DashboardClient({ website }: { website: Website }) {
 
       const seq = ++requestSeq.current;
       try {
-        const data = await getDashboardOverview(supabase, website.id, {
-          start,
-          end,
-          interval,
-          prevStart,
-          prevEnd,
-          filterType: filter?.type ?? null,
-          filterValue: filter?.value ?? null,
-          limit: 8,
+        const data = await loadOverview(supabase, website.id, range, {
+          filter,
+          limit: 100,
         });
         if (seq !== requestSeq.current) return;
-        overviewCache.set(key, { data, at: Date.now() });
         setOverview(data);
         setError(null);
       } catch (e) {
@@ -165,6 +160,8 @@ export default function DashboardClient({ website }: { website: Website }) {
     for (const r of overview.referrers) rows.push(`Referrer,"${r.referrer_domain}",${r.pageviews},${r.visitors},`);
     for (const c of overview.countries) rows.push(`Country,"${c.country}",${c.visitors},${c.sessions},`);
     for (const ch of overview.channels ?? []) rows.push(`Channel,"${ch.utm_source}",${ch.pageviews},${ch.visitors},`);
+    for (const ai of overview.ai_sources ?? [])
+      rows.push(`AI Source,"${AI_SOURCE_LABELS[ai.source] ?? ai.source}",${ai.pageviews},${ai.visitors},`);
     for (const b of overview.devices.browsers ?? []) rows.push(`Browser,"${b.name}",${b.count},,`);
     for (const ev of overview.events ?? []) rows.push(`Event,"${ev.event_name}",${ev.total_events},${ev.unique_visitors},`);
     if (filter) rows.push(`Filter,"${filter.type}:${filter.value}",,,`);
@@ -219,6 +216,7 @@ export default function DashboardClient({ website }: { website: Website }) {
   const devices = overview?.devices ?? { browsers: [], os: [], devices: [] };
   const events = overview?.events ?? [];
   const channels = overview?.channels ?? [];
+  const aiSources = overview?.ai_sources ?? [];
 
   const chartData = useMemo(
     () =>
@@ -234,6 +232,7 @@ export default function DashboardClient({ website }: { website: Website }) {
   const maxReferrerViews = referrers.length ? Math.max(...referrers.map((r) => Number(r.pageviews))) : 1;
   const maxCountryVisitors = countries.length ? Math.max(...countries.map((c) => Number(c.visitors))) : 1;
   const maxChannelViews = channels.length ? Math.max(...channels.map((c) => Number(c.pageviews))) : 1;
+  const maxAiViews = aiSources.length ? Math.max(...aiSources.map((a) => Number(a.pageviews))) : 1;
 
   const deviceSegments = (devices.devices || []).map((d) => ({
     label: d.name,
@@ -949,6 +948,47 @@ export default function DashboardClient({ website }: { website: Website }) {
               <p className="font-mono text-[10px] uppercase text-[#999999] mt-3">
                 UTM params <span className="text-[#71717a]">utm_source/medium/campaign</span> + click IDs <span className="text-[#71717a]">gclid/fbclid</span> are captured automatically from the URL. No code change needed.
               </p>
+            </PanelCard>
+          )}
+
+          {/* AI Traffic — referrals from ChatGPT/Perplexity/Gemini/Claude/Copilot */}
+          {aiSources.length > 0 && (
+            <PanelCard
+              eyebrow="ACQUISITION"
+              title="AI Traffic"
+              action={
+                <span className="font-mono text-[10px] uppercase text-[#999999] hidden sm:inline">
+                  AI ASSISTANT REFERRALS · AUTO-DETECTED
+                </span>
+              }
+            >
+              <div className="border border-[#ebebeb] rounded-[4px] overflow-hidden">
+                <DataTableHeader
+                  columns={[
+                    { label: 'AI SOURCE' },
+                    { label: 'VIEWS', width: '90px', align: 'right' },
+                    { label: 'VISITORS', width: '90px', align: 'right' },
+                  ]}
+                />
+                {[...aiSources]
+                  .sort((a, b) => Number(b.pageviews) - Number(a.pageviews))
+                  .map((ai, idx) => (
+                    <DataTableRow key={idx} percent={(Number(ai.pageviews) / maxAiViews) * 100}>
+                      <span className="inline-flex items-center gap-2 flex-1 pr-2 min-w-0">
+                        <Sparkles className="w-3.5 h-3.5 text-[#71717a] shrink-0" />
+                        <span className="font-display text-[14px] text-black font-medium truncate">
+                          {AI_SOURCE_LABELS[ai.source] ?? ai.source}
+                        </span>
+                      </span>
+                      <span className="font-mono text-[13px] text-black w-[90px] text-right font-medium">
+                        {formatNumber(Number(ai.pageviews))}
+                      </span>
+                      <span className="font-mono text-[13px] text-[#71717a] w-[90px] text-right">
+                        {formatNumber(Number(ai.visitors))}
+                      </span>
+                    </DataTableRow>
+                  ))}
+              </div>
             </PanelCard>
           )}
 

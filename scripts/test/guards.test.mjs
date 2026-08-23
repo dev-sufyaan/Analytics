@@ -10,6 +10,7 @@ import {
   preflight,
   extractEvents,
   buildEventParams,
+  classifyAiSource,
   LIMITS,
   UUID_RE,
 } from '../../apps/web/lib/ingest-guards.mjs';
@@ -218,6 +219,44 @@ const tests = [
     );
     eq(c.payload.p_referrer_domain, null, 'self-referral nulled');
     eq(c.payload.p_hostname, 'example.com', 'hostname falls back to site domain');
+  }),
+
+  // ---- AI referrer classification (Core 5) ----
+
+  test('classifyAiSource: exact hosts map to canonical labels', () => {
+    eq(classifyAiSource('chatgpt.com'), 'chatgpt');
+    eq(classifyAiSource('openai.com'), 'chatgpt');
+    eq(classifyAiSource('perplexity.ai'), 'perplexity');
+    eq(classifyAiSource('gemini.google.com'), 'gemini');
+    eq(classifyAiSource('claude.ai'), 'claude');
+    eq(classifyAiSource('copilot.microsoft.com'), 'copilot');
+  }),
+
+  test('classifyAiSource: subdomains, case, whitespace', () => {
+    eq(classifyAiSource('chat.openai.com'), 'chatgpt', 'subdomain of openai.com');
+    eq(classifyAiSource('www.perplexity.ai'), 'perplexity');
+    eq(classifyAiSource('CHATGPT.COM'), 'chatgpt', 'case-insensitive');
+    eq(classifyAiSource('  claude.ai  '), 'claude', 'trimmed');
+  }),
+
+  test('classifyAiSource: non-AI and boundary cases return null', () => {
+    eq(classifyAiSource('google.com'), null, 'AI Overview stays organic (accepted limitation)');
+    eq(classifyAiSource('notchatgpt.com'), null, 'no partial-suffix match');
+    eq(classifyAiSource('chatgpt.com.evil.io'), null, 'suffix must be subdomain-boundary');
+    eq(classifyAiSource('example.com'), null);
+    eq(classifyAiSource(''), null);
+    eq(classifyAiSource(null), null);
+    eq(classifyAiSource(undefined), null);
+    eq(classifyAiSource(12345), null);
+  }),
+
+  test('buildEventParams: attaches p_referrer_source from referrer', () => {
+    const ai = buildEventParams({ w: UUID, u: '/x', r: 'https://chatgpt.com/backend-api/link' }, SITE, CTX);
+    eq(ai.payload.p_referrer_source, 'chatgpt', 'AI referral tagged');
+    const organic = buildEventParams({ w: UUID, u: '/x', r: 'https://www.google.com/search?q=x' }, SITE, CTX);
+    eq(organic.payload.p_referrer_source, null, 'organic search untagged');
+    const direct = buildEventParams({ w: UUID, u: '/x', r: '' }, SITE, CTX);
+    eq(direct.payload.p_referrer_source, null, 'direct/null referrer untagged');
   }),
 ];
 

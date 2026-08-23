@@ -1,10 +1,9 @@
-import { createServerClient } from '@analytics/db/server';
-import { getUserWebsites } from '@analytics/db/queries';
 import { redirect } from 'next/navigation';
+import { getRscUserWebsites } from '@/lib/rsc-user';
 
 export default async function AppPage() {
-  const supabase = await createServerClient();
-  const websites = await getUserWebsites(supabase);
+  // Shares the layout's per-request cached query — no second round trip.
+  const websites = await getRscUserWebsites();
 
   if (websites.length === 0) {
     redirect('/app/sites/new');

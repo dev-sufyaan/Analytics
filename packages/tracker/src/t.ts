@@ -8,7 +8,9 @@
 //   - events are queued and flushed as ONE beacon every ~200ms (or when 10
 //     are pending); flush is immediate on hide/pagehide
 //   - duration = delta seconds since the last beat, sent on hide/pagehide;
-//     a 45s interval beat while visible keeps realtime + duration honest
+//     a 90s interval beat while visible keeps realtime + duration honest
+//     (deltas are clamped to <=120s server-side, so accuracy is preserved
+//     while halving heartbeat request volume on free-tier hosting)
 //   - sendBeacon first, fetch(keepalive) fallback
 //   - identical payload within 1s is deduped; DNT + localhost respected
 
@@ -165,7 +167,7 @@
   // Periodic visible heartbeat keeps "active visitors" and duration fresh.
   setInterval(function () {
     if (document.visibilityState === 'visible') beat();
-  }, 45000);
+  }, 90000);
 
   if (document.readyState === 'complete' || document.readyState === 'interactive') trackPageview();
   else document.addEventListener('DOMContentLoaded', trackPageview);
