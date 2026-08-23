@@ -1,6 +1,6 @@
 import React from 'react';
-import { createServerClient } from '@aether/db/server';
-import { getWebsiteById } from '@aether/db/queries';
+import { createServerClient } from '@analytics/db/server';
+import { getWebsiteById } from '@analytics/db/queries';
 import { notFound } from 'next/navigation';
 import DashboardClient from './DashboardClient';
 

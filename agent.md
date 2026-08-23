@@ -17,8 +17,8 @@ A cookie-less, Umami-class analytics product: tiny tracker, edge ingest,
 instant dashboard, public share links. Separate brand from form2lead.
 Built for $0 (domain excepted). Not a Umami fork. Not a PostHog clone.
 
-Working name in code: **Aether** (replace when a real name exists).
-Package / repo: `aether`. Tracker global: `window.aether`. Script: `t.js`.
+Product name: **Analytics by Sufyaan Studio** (wordmark: "analytics"; studio: "Sufyaan Studio").
+Package / repo: `analytics`. Workspace scope: `@analytics/*`. Tracker global: `window.analytics`. Script: `t.js`.
 Collect path: `POST /c` on the **Cloudflare Worker** (first-party route).
 Optional alias `/stats.js` for the script only. Public share id: `share_token`.
 
@@ -435,7 +435,7 @@ Behaviour:
 
 - Auto pageview on load
 - Patch `pushState` **and** `replaceState`; listen `popstate`
-- `window.aether.track(name, props)`
+- `window.analytics.track(name, props)`
 - `sendBeacon` to `https://{domain}/c` (absolute, baked at build or
   `data-host` override). `fetch` + `keepalive` fallback
 - Queue 100–300 ms; one request when possible

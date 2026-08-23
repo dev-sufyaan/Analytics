@@ -1,5 +1,5 @@
-import { createServerClient } from '@aether/db/server';
-import { getUserWebsites } from '@aether/db/queries';
+import { createServerClient } from '@analytics/db/server';
+import { getUserWebsites } from '@analytics/db/queries';
 import { redirect } from 'next/navigation';
 
 export default async function AppPage() {

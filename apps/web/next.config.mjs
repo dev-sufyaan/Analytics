@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@aether/ui', '@aether/db'],
+  transpilePackages: ['@analytics/ui', '@analytics/db'],
   reactStrictMode: true,
   serverExternalPackages: ['@supabase/ssr', '@supabase/supabase-js'],
 };

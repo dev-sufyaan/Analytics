@@ -5,3 +5,4 @@ export * from './inputs';
 export * from './navigation';
 export * from './data';
 export * from './charts';
+export * from './format';

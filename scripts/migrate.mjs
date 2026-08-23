@@ -21,33 +21,45 @@ const sql = postgres(dbUrl, { ssl: { rejectUnauthorized: false } });
 
 async function run() {
   try {
-    const migrationPath = path.resolve(__dirname, '../supabase/migrations/0001_init.sql');
-    const migrationSql = fs.readFileSync(migrationPath, 'utf8');
+    const migrationsDir = path.resolve(__dirname, '../supabase/migrations');
+    const files = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
 
-    console.log('Applying 0001_init.sql migration...');
-    await sql.unsafe(migrationSql);
+    if (files.length === 0) {
+      console.error('No migrations found in', migrationsDir);
+      process.exit(1);
+    }
 
-    console.log('Migration applied successfully!');
+    for (const file of files) {
+      console.log(`Applying ${file}...`);
+      const migrationSql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      await sql.unsafe(migrationSql);
+      console.log(`✓ ${file} applied`);
+    }
 
     // Verify tables
     const tables = await sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
       ORDER BY table_name;
     `;
-    console.log('Public tables:', tables.map(t => t.table_name));
+    console.log('Public tables:', tables.map((t) => t.table_name).join(', '));
 
     // Verify functions
     const functions = await sql`
-      SELECT routine_name 
-      FROM information_schema.routines 
-      WHERE routine_schema = 'public' 
+      SELECT routine_name
+      FROM information_schema.routines
+      WHERE routine_schema = 'public'
       ORDER BY routine_name;
     `;
-    console.log('Public functions:', functions.map(f => f.routine_name));
+    console.log('Public functions:', functions.map((f) => f.routine_name).join(', '));
+
+    console.log('\nAll migrations applied successfully!');
   } catch (err) {
-    console.error('Migration failed:', err);
+    console.error('Migration failed:', err.message);
     process.exit(1);
   } finally {
     await sql.end();

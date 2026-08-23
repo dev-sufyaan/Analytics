@@ -43,6 +43,20 @@ export interface WebsiteEvent {
   url_query: string | null;
   title: string | null;
   referrer_domain: string | null;
+  referrer_path: string | null;
+  referrer_query: string | null;
+  hostname: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  gclid: string | null;
+  fbclid: string | null;
+  msclkid: string | null;
+  ttclid: string | null;
+  lifatid: string | null;
+  twclid: string | null;
   event_name: string | null;
   event_data: Record<string, any> | null;
   created_at: string;
@@ -111,7 +125,50 @@ export interface TopEvent {
   unique_visitors: number;
 }
 
+export interface TopChannel {
+  utm_source: string;
+  pageviews: number;
+  visitors: number;
+}
+
+export interface TopUtmMedium {
+  utm_medium: string;
+  pageviews: number;
+  visitors: number;
+}
+
+export interface TopUtmCampaign {
+  utm_campaign: string;
+  pageviews: number;
+  visitors: number;
+}
+
 export interface RealtimeData {
   active_visitors: number;
   active_pages: { url_path: string; count: number }[];
+}
+
+// --- Combined dashboard overview (single-round-trip payload) ---
+
+export type DashboardRange = '24h' | '7d' | '30d' | '90d';
+
+export type DashboardFilterType = 'path' | 'referrer' | 'country';
+
+export interface DashboardFilter {
+  type: DashboardFilterType;
+  value: string;
+}
+
+export interface DashboardOverview {
+  stats: WebsiteStats;
+  prev_stats: WebsiteStats | null;
+  timeseries: TimeseriesPoint[];
+  pages: TopPage[];
+  referrers: TopReferrer[];
+  countries: TopCountry[];
+  devices: TopDevices;
+  events: TopEvent[];
+  channels: TopChannel[];
+  filtered_by: DashboardFilter | null;
+  generated_at: string;
 }

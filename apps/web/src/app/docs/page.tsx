@@ -11,7 +11,7 @@ import {
   Footer,
   FooterWordmarkBanner,
   TextInput,
-} from '@aether/ui';
+} from '@analytics/ui';
 import {
   Code,
   Zap,
@@ -209,22 +209,25 @@ export default function App() {
   const backendSnippets: Record<string, { title: string; code: string }> = {
     node: {
       title: 'Node.js / Express',
-      code: `// Track backend events or webhook conversions
-async function trackEvent(websiteId, eventName, urlPath, properties = {}) {
+      code: `// Track backend events or webhook conversions — UTM auto-extracted from q
+async function trackEvent(websiteId, eventName, urlPath, queryString = '', properties = {}) {
   await fetch('https://yourdomain.com/c', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       w: websiteId,
-      n: eventName,
-      u: urlPath,
-      p: properties
+      n: eventName,                 // 'pageview' or custom name (≤128 chars, no =+-@)
+      u: urlPath,                   // '/pricing' — pathname only
+      q: queryString,               // '?utm_source=google&utm_medium=cpc&gclid=xyz' — UTMs parsed server-side
+      r: 'https://google.com/',     // referrer — host extracted, self-referrals dropped
+      t: 'Pricing',                 // title — 512 chars, formula-guarded
+      p: properties                 // 2 KB JSON
     })
   });
 }
 
 // Example usage:
-await trackEvent('YOUR_WEBSITE_ID', '${docEventName}', '/checkout', {
+await trackEvent('YOUR_WEBSITE_ID', '${docEventName}', '/checkout', '?utm_source=google&utm_medium=cpc', {
   ${docPropKey}: '${docPropVal}',
   amount: 240
 });`,
@@ -233,27 +236,31 @@ await trackEvent('YOUR_WEBSITE_ID', '${docEventName}', '/checkout', {
       title: 'Python / Django / FastAPI',
       code: `import requests
 
-def track_event(website_id: str, event_name: str, url_path: str, props: dict = None):
+def track_event(website_id: str, event_name: str, url_path: str, query: str = '', props: dict = None):
     payload = {
         "w": website_id,
-        "n": event_name,
-        "u": url_path,
-        "p": props or {}
+        "n": event_name,            # 'pageview' or custom (≤128 chars)
+        "u": url_path,              # '/pricing'
+        "q": query,                 # '?utm_source=google&gclid=xyz' — UTMs auto-parsed
+        "r": "https://google.com/", # referrer
+        "p": props or {}            # 2 KB JSON
     }
     requests.post("https://yourdomain.com/c", json=payload, timeout=2)
 
 # Example usage:
-track_event("YOUR_WEBSITE_ID", "${docEventName}", "/checkout", {"${docPropKey}": "${docPropVal}"})`,
+track_event("YOUR_WEBSITE_ID", "${docEventName}", "/checkout", "?utm_source=google", {"${docPropKey}": "${docPropVal}"})`,
     },
     php: {
       title: 'PHP / Laravel',
-      code: `// Laravel Http Client or PHP cURL
+      code: `// Laravel Http Client or PHP cURL — UTM via q
 use Illuminate\\Support\\Facades\\Http;
 
 Http::timeout(2)->post('https://yourdomain.com/c', [
     'w' => 'YOUR_WEBSITE_ID',
     'n' => '${docEventName}',
     'u' => '/checkout',
+    'q' => '?utm_source=google&utm_medium=cpc&gclid=xyz',
+    'r' => 'https://google.com/',
     'p' => ['${docPropKey}' => '${docPropVal}']
 ]);`,
     },
@@ -265,13 +272,15 @@ Http::timeout(2)->post('https://yourdomain.com/c', [
     "w": "YOUR_WEBSITE_ID",
     "n": "${docEventName}",
     "u": "/checkout",
+    "q": "?utm_source=google&utm_medium=cpc&gclid=xyz",
+    "r": "https://google.com/",
     "p": {"${docPropKey}": "${docPropVal}"}
   }'`,
     },
   };
 
   const dynamicJsCode = `// Dispatch in frontend:
-window.aether.track('${docEventName}', {
+window.analytics.track('${docEventName}', {
   ${docPropKey}: '${docPropVal}'
 });`;
 
@@ -281,7 +290,7 @@ window.aether.track('${docEventName}', {
       <NavBar>
         <Link href="/" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight">
           <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>aether</span>
+          <span>analytics</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -316,7 +325,7 @@ window.aether.track('${docEventName}', {
               Integration & Event API Reference
             </h1>
             <p className="font-display text-[16px] md:text-[18px] leading-[26px] text-zinc-300">
-              Complete guides for installing Aether across modern web frameworks, static sites, local HTML files, and server-side runtimes with zero cookie consent banners.
+              Complete guides for installing Analytics across modern web frameworks, static sites, local HTML files, and server-side runtimes with zero cookie consent banners.
             </p>
           </div>
         </div>
@@ -364,13 +373,18 @@ window.aether.track('${docEventName}', {
                     </a>
                   </li>
                   <li>
+                    <a href="#utm-channels" className="hover:text-black transition-colors block py-1">
+                      7. UTM & Channel Attribution
+                    </a>
+                  </li>
+                  <li>
                     <a href="#troubleshooting" className="hover:text-black transition-colors block py-1">
-                      7. Testing & Troubleshooting
+                      8. Testing & Troubleshooting
                     </a>
                   </li>
                   <li>
                     <a href="#best-practices" className="hover:text-black transition-colors block py-1">
-                      8. Best Practices & CSP
+                      9. Best Practices & CSP
                     </a>
                   </li>
                 </ul>
@@ -404,7 +418,7 @@ window.aether.track('${docEventName}', {
                 One-Line Quickstart
               </h2>
               <p className="font-display text-[15px] leading-[24px] text-[#71717a] mb-6">
-                Add the lightweight script tag inside the <code className="bg-[#f2f2f2] px-1.5 py-0.5 rounded font-mono text-[13px] text-black">&lt;head&gt;</code> of your website. The script runs asynchronously, weighs only 939 bytes gzipped, and does not block page rendering.
+                Add the lightweight script tag inside the <code className="bg-[#f2f2f2] px-1.5 py-0.5 rounded font-mono text-[13px] text-black">&lt;head&gt;</code> of your website. The script runs asynchronously, weighs 1.15 KB gzipped (≤1.5 KB budget, 0 dependencies), and does not block page rendering. Uses <code className="font-mono text-[12px] bg-[#f2f2f2] px-1 py-0.5 rounded">sendBeacon</code> → <code className="font-mono text-[12px] bg-[#f2f2f2] px-1 py-0.5 rounded">fetch(keepalive)</code> fallback.
               </p>
 
               <CodeEditorMockup
@@ -416,22 +430,30 @@ window.aether.track('${docEventName}', {
                 title="UNIVERSAL HTML SNIPPET"
               />
 
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
-                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">ATTRIBUTE</span>
+                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">REQUIRED</span>
                   <p className="font-mono text-[13px] text-black font-medium">data-web</p>
-                  <p className="font-display text-[12px] text-[#71717a] mt-1">Your website UUID created in Aether.</p>
+                  <p className="font-display text-[12px] text-[#71717a] mt-1">Your website UUID. Pageviews auto-tracked, SPA via pushState.</p>
                 </div>
                 <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
-                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">ATTRIBUTE</span>
-                  <p className="font-mono text-[13px] text-black font-medium">data-dev="true"</p>
-                  <p className="font-display text-[12px] text-[#71717a] mt-1">Optional. Forces tracking on localhost.</p>
-                </div>
-                <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
-                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">ATTRIBUTE</span>
+                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">OPTIONAL</span>
                   <p className="font-mono text-[13px] text-black font-medium">data-host</p>
-                  <p className="font-display text-[12px] text-[#71717a] mt-1">Optional. Custom proxy / collector URL.</p>
+                  <p className="font-display text-[12px] text-[#71717a] mt-1">Custom collector origin. Defaults to script origin + <code className="font-mono text-[11px]">/c</code>.</p>
                 </div>
+                <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">OPTIONAL</span>
+                  <p className="font-mono text-[13px] text-black font-medium">data-dev="true"</p>
+                  <p className="font-display text-[12px] text-[#71717a] mt-1">Allow <code className="font-mono text-[11px]">localhost</code> / <code className="font-mono text-[11px]">127.0.0.1</code> / <code className="font-mono text-[11px]">*.local</code>.</p>
+                </div>
+                <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                  <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">OPTIONAL</span>
+                  <p className="font-mono text-[13px] text-black font-medium">data-respect-dnt="true"</p>
+                  <p className="font-display text-[12px] text-[#71717a] mt-1">Honor <code className="font-mono text-[11px]">navigator.doNotTrack=1</code>.</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-[#fafafa] border border-[#ebebeb] rounded-[4px] font-mono text-[11px] text-[#71717a]">
+                Auto-captured per pageview: <span className="text-black">url (pathname)</span> + <span className="text-black">query (?utm_*)</span> + <span className="text-black">referrer</span> + <span className="text-black">title</span> + <span className="text-black">screen</span> + <span className="text-black">language</span> + <span className="text-black">hostname</span>. UTM/click-IDs extracted server-side, referrer self-check drops your own domain.
               </div>
             </section>
 
@@ -494,20 +516,20 @@ window.aether.track('${docEventName}', {
                 Custom Events & Conversion Tracking
               </h2>
               <p className="font-display text-[15px] leading-[24px] text-[#71717a] mb-6">
-                Track custom user interactions like signup buttons, modal triggers, billing tier upgrades, and checkout completions using <code className="font-mono text-[13px] bg-[#f2f2f2] px-1.5 py-0.5 rounded text-black">window.aether.track()</code>.
+                Track custom user interactions like signup buttons, modal triggers, billing tier upgrades, and checkout completions using <code className="font-mono text-[13px] bg-[#f2f2f2] px-1.5 py-0.5 rounded text-black">window.analytics.track()</code>.
               </p>
 
               <div className="space-y-6">
                 <CodeEditorMockup
                   title="EVENT TRACKING API SYNTAX"
                   code={`// Signature:
-// window.aether.track(eventName: string, properties?: Record<string, any>)
+// window.analytics.track(eventName: string, properties?: Record<string, any>)
 
 // 1. Basic Button Click Event:
-window.aether.track('pricing_cta_clicked');
+window.analytics.track('pricing_cta_clicked');
 
 // 2. Custom Conversion Event with Metadata:
-window.aether.track('user_signed_up', {
+window.analytics.track('user_signed_up', {
   plan: 'pro_monthly',
   source: 'header_banner',
   currency: 'USD',
@@ -515,7 +537,7 @@ window.aether.track('user_signed_up', {
 });
 
 // 3. E-commerce Checkout Completed:
-window.aether.track('purchase_success', {
+window.analytics.track('purchase_success', {
   order_id: 'ord_987654',
   items_count: 3,
   value: 149.50
@@ -524,12 +546,14 @@ window.aether.track('purchase_success', {
 
                 <div className="p-4 bg-[#fafafa] border border-[#ebebeb] rounded-[4px]">
                   <h4 className="font-display text-[15px] font-medium text-black mb-2">
-                    Event Validation & Payload Limits:
+                    Event Validation & Payload Limits (server-enforced):
                   </h4>
                   <ul className="space-y-1.5 font-display text-[13px] text-[#71717a]">
-                    <li>• <strong>Name limit:</strong> Maximum 64 characters (alphanumeric, underscores, hyphens).</li>
-                    <li>• <strong>Properties payload:</strong> Maximum 2 KB JSON payload.</li>
-                    <li>• <strong>Rate limit:</strong> Rapid duplicate calls within 1 second are automatically debounced.</li>
+                    <li>• <strong>Name limit:</strong> 128 chars (trimmed, <code className="font-mono text-[11px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">p_event_name</code>). Names starting with <code className="font-mono text-[11px] bg-white border px-1 py-0.5 rounded">= + - @</code> rejected (CSV injection guard).</li>
+                    <li>• <strong>Properties payload:</strong> 2 KB JSON (`pg_column_size` cap) — objects kept, arrays/scalars wrapped as <code className="font-mono text-[11px] bg-white border px-1 py-0.5 rounded">{`{value: ...}`}</code>, oversized truncated server-side.</li>
+                    <li>• <strong>Path/Title/Query caps:</strong> 1024 / 512 / 512 chars. Bot User-Agents dropped, empty UA dropped.</li>
+                    <li>• <strong>Dedupe:</strong> Identical payload within 1s (client) + same-path pageview within 1s (server, only if last event was pageview) debounced.</li>
+                    <li>• <strong>Queue:</strong> 200 ms batch window, max 10 events/request, <code className="font-mono text-[11px] bg-white border px-1 py-0.5 rounded">sendBeacon</code> → <code className="font-mono text-[11px] bg-white border px-1 py-0.5 rounded">fetch keepalive</code>, flushed on <code className="font-mono text-[11px] bg-white border px-1 py-0.5 rounded">visibilitychange/pagehide</code>.</li>
                   </ul>
                 </div>
               </div>
@@ -588,7 +612,7 @@ window.aether.track('purchase_success', {
                   code={`// 1. Track all button clicks automatically:
 document.querySelectorAll('button, .btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    window.aether?.track('button_click', {
+    window.analytics?.track('button_click', {
       text: btn.innerText.trim(),
       id: btn.id || null
     });
@@ -602,14 +626,14 @@ window.addEventListener('scroll', () => {
   [25, 50, 75, 100].forEach(milestone => {
     if (depth >= milestone && maxScroll < milestone) {
       maxScroll = milestone;
-      window.aether?.track('scroll_depth', { percent: milestone });
+      window.analytics?.track('scroll_depth', { percent: milestone });
     }
   });
 });
 
 // 3. Track modal open & close:
 function openModal(modalName) {
-  window.aether?.track('modal_opened', { modal: modalName });
+  window.analytics?.track('modal_opened', { modal: modalName });
 }`}
                 />
               </div>
@@ -648,12 +672,58 @@ function openModal(modalName) {
                 code={backendSnippets[selectedBackend].code}
                 title={`${selectedBackend.toUpperCase()} SERVER EXAMPLE`}
               />
+              <div className="mt-4 p-4 bg-[#fafafa] border border-[#ebebeb] rounded-[4px] font-mono text-[11px] text-[#71717a]">
+                <span className="text-black font-medium">Payload keys:</span> <code className="bg-white border border-[#ebebeb] px-1 py-0.5 rounded text-black">w</code> website UUID, <code className="bg-white border px-1 py-0.5 rounded text-black">n</code> event name (null=pageview), <code className="bg-white border px-1 py-0.5 rounded text-black">u</code> pathname, <code className="bg-white border px-1 py-0.5 rounded text-black">q</code> query (UTMs auto-parsed → <code className="bg-white border px-1 py-0.5 rounded text-black">utm_source</code> etc), <code className="bg-white border px-1 py-0.5 rounded text-black">r</code> referrer (host+path extracted, self dropped), <code className="bg-white border px-1 py-0.5 rounded text-black">t</code> title, <code className="bg-white border px-1 py-0.5 rounded text-black">p</code> JSON props (2 KB). Server IP/UA/Country derived from headers (11 headers, CIDR block via <code className="bg-white border px-1 py-0.5 rounded text-black">IGNORE_IP</code>), hostname from <code className="bg-white border px-1 py-0.5 rounded text-black">Origin/Referer</code>.
+              </div>
             </section>
 
-            {/* 7. Testing & Troubleshooting */}
+            {/* 7. UTM & Channel Attribution */}
+            <section id="utm-channels" className="scroll-mt-24">
+              <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
+                07 // UTM & CHANNEL ATTRIBUTION
+              </span>
+              <h2 className="font-display text-[28px] md:text-[34px] font-medium tracking-[-0.6px] text-black mb-4">
+                UTM & Channel Attribution
+              </h2>
+              <p className="font-display text-[15px] leading-[24px] text-[#71717a] mb-6">
+                Marketing attribution is automatic. Every pageview captures <code className="font-mono text-[13px] bg-[#f2f2f2] px-1.5 py-0.5 rounded text-black">utm_source / utm_medium / utm_campaign / utm_content / utm_term</code> and click IDs <code className="font-mono text-[13px] bg-[#f2f2f2] px-1.5 py-0.5 rounded text-black">gclid / fbclid / msclkid / ttclid / li_fat_id / twclid</code> from the URL query string. No code change needed — just use tagged URLs.
+              </p>
+
+              <div className="space-y-6">
+                <CodeEditorMockup
+                  title="EXAMPLE TAGGED URL"
+                  code={`https://yourdomain.com/pricing?utm_source=google&utm_medium=cpc&utm_campaign=spring_sale&utm_content=hero_cta&gclid=abc123`}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                    <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">DASHBOARD</span>
+                    <p className="font-display text-[13px] text-black font-medium">Top Channels (utm_source)</p>
+                    <p className="font-display text-[12px] text-[#71717a] mt-1">Overview → Channels panel. Filtered by date range and drill-down. Export includes channels CSV.</p>
+                  </div>
+                  <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                    <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">API</span>
+                    <p className="font-mono text-[12px] text-black">get_top_utm_sources(website_id, start, end)</p>
+                    <p className="font-display text-[12px] text-[#71717a] mt-1">Also: utm_medium, utm_campaign. Public share uses get_public_top_utm_sources.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-[#fafafa] border border-[#ebebeb] rounded-[4px]">
+                  <h4 className="font-display text-[15px] font-medium text-black mb-2">What is stored per pageview:</h4>
+                  <ul className="space-y-1.5 font-display text-[13px] text-[#71717a]">
+                    <li>• <code className="font-mono text-[12px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">utm_source</code> <code className="font-mono text-[12px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">utm_medium</code> <code className="font-mono text-[12px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">utm_campaign</code> — truncated to 255 chars, indexed.</li>
+                    <li>• <code className="font-mono text-[12px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">referrer_path</code> / <code className="font-mono text-[12px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">referrer_query</code> — full referrer path alongside host, self-referrals nulled.</li>
+                    <li>• <code className="font-mono text-[12px] bg-white border border-[#ebebeb] px-1 py-0.5 rounded">hostname</code> — per-event host for multi-domain allowed_domains.</li>
+                    <li>• <strong>Privacy:</strong> raw IP never stored, visitor_hash salted, all fields capped server-side. See dashboard Filters for retention-bound breakdowns.</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* 8. Testing & Troubleshooting */}
             <section id="troubleshooting" className="scroll-mt-24">
               <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
-                07 // DEBUGGING & LOCAL TESTING
+                08 // DEBUGGING & LOCAL TESTING
               </span>
               <h2 className="font-display text-[28px] md:text-[34px] font-medium tracking-[-0.6px] text-black mb-4">
                 Testing & Troubleshooting
@@ -686,16 +756,16 @@ function openModal(modalName) {
                     3. Trigger Events via DevTools Console
                   </h4>
                   <p className="font-display text-[14px] leading-[22px] text-[#71717a]">
-                    Type <code className="font-mono text-[12px] bg-[#f4f4f4] px-1 py-0.5 rounded text-black">window.aether.track('test_event', &#123; user: 'tester' &#125;)</code> in your browser console to immediately verify event delivery.
+                    Type <code className="font-mono text-[12px] bg-[#f4f4f4] px-1 py-0.5 rounded text-black">window.analytics.track('test_event', &#123; user: 'tester' &#125;)</code> in your browser console to immediately verify event delivery.
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* 8. Best Practices & CSP */}
+            {/* 9. Best Practices & CSP */}
             <section id="best-practices" className="scroll-mt-24">
               <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
-                08 // BEST PRACTICES & SECURITY
+                09 // BEST PRACTICES & SECURITY
               </span>
               <h2 className="font-display text-[28px] md:text-[34px] font-medium tracking-[-0.6px] text-black mb-4">
                 Content Security Policy (CSP) & Proxying

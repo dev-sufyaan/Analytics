@@ -159,7 +159,7 @@ export function Footer({ className }: { className?: string }) {
         </div>
 
         <div className="pt-8 border-t border-[#ebebeb] flex flex-col md:flex-row items-center justify-between text-[#71717a] font-display text-[13px] gap-4">
-          <p>© {new Date().getFullYear()} Aether Analytics. Privacy-first, open architecture.</p>
+          <p>© {new Date().getFullYear()} Analytics by Sufyaan Studio. Privacy-first, open architecture.</p>
           <div className="flex items-center gap-6">
             <a href="/docs" className="hover:text-black transition-colors">Docs</a>
             <a href="/pricing" className="hover:text-black transition-colors">Pricing</a>
@@ -172,7 +172,7 @@ export function Footer({ className }: { className?: string }) {
 }
 
 // 6. FooterWordmarkBanner (giant lowercase product name)
-export function FooterWordmarkBanner({ name = 'aether' }: { name?: string }) {
+export function FooterWordmarkBanner({ name = 'analytics' }: { name?: string }) {
   return (
     <div className="w-full bg-[#010120] text-[#131338] select-none pointer-events-none overflow-hidden py-6 text-center border-t border-[#26263a]">
       <span className="font-display text-[72px] md:text-[140px] lg:text-[180px] font-medium leading-none tracking-[-0.04em] lowercase block text-[#15153c]">

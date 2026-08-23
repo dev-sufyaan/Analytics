@@ -1,12 +1,21 @@
 {
-  "name": "aether",
+  "name": "analytics",
   "private": true,
   "scripts": {
     "dev": "pnpm --filter web dev",
     "dev:collect": "pnpm --filter collect dev",
-    "build": "pnpm --filter @aether/tracker build && pnpm --filter web build",
-    "build:tracker": "pnpm --filter @aether/tracker build",
-    "db:migrate": "node scripts/migrate.mjs"
+    "build": "pnpm --filter @analytics/tracker build && pnpm --filter web build",
+    "build:tracker": "pnpm --filter @analytics/tracker build",
+    "db:migrate": "node scripts/migrate.mjs",
+    "test": "node scripts/test/guards.test.mjs && node scripts/test/tracker.test.mjs && node scripts/test/schema.test.mjs",
+    "test:guards": "node scripts/test/guards.test.mjs",
+    "test:tracker": "node scripts/test/tracker.test.mjs",
+    "test:schema": "node scripts/test/schema.test.mjs",
+    "test:rpc": "node scripts/test/rpc.test.mjs",
+    "test:e2e": "node scripts/test/e2e-collect.test.mjs",
+    "test:load": "node scripts/test/load.mjs",
+    "test:integration": "node scripts/test/rpc.test.mjs && node scripts/test/e2e-collect.test.mjs",
+    "test:all": "npm run test && npm run test:integration && node scripts/test/load.mjs"
   },
   "devDependencies": {
     "dotenv": "^16.4.7",

@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useParams } from 'next/navigation';
-import { createBrowserClient } from '@aether/db/client';
-import { Website } from '@aether/db/types';
+import { createBrowserClient } from '@analytics/db/client';
+import { Website } from '@analytics/db/types';
 import {
   AppSidebar,
   AppSidebarRow,
-} from '@aether/ui';
+} from '@analytics/ui';
 import {
   BarChart3,
   FileText,
@@ -42,6 +42,23 @@ export default function AppShellClient({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [siteMenuOpen, setSiteMenuOpen] = useState(false);
 
+  // Close drawers on navigation + ESC handling
+  useEffect(() => {
+    setMobileOpen(false);
+    setSiteMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileOpen(false);
+        setSiteMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   // Extract current website ID from URL if inside /app/[id]/*
   const currentWebsiteId = (params?.id as string) || (websites.length > 0 ? websites[0].id : null);
   const currentSite = websites.find((w) => w.id === currentWebsiteId) || websites[0];
@@ -73,11 +90,13 @@ export default function AppShellClient({
       <div className="md:hidden bg-[#010120] text-white px-4 h-14 flex items-center justify-between border-b border-[#26263a] sticky top-0 z-50">
         <Link href="/app" className="flex items-center gap-2 font-display text-[18px] font-medium">
           <span className="w-2 h-2 bg-[#c8f6f9] rounded-full" />
-          <span>aether</span>
+          <span>analytics</span>
         </Link>
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-expanded={mobileOpen}
+          aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
           className="p-2 text-white hover:bg-[#26263a] rounded-[4px] cursor-pointer"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -96,7 +115,7 @@ export default function AppShellClient({
             <div className="pb-4 mb-4 border-b border-[#26263a]">
               <Link href="/app" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight mb-4 px-2">
                 <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-                <span>aether</span>
+                <span>analytics</span>
               </Link>
 
               {websites.length > 0 && (
@@ -104,6 +123,8 @@ export default function AppShellClient({
                   <button
                     type="button"
                     onClick={() => setSiteMenuOpen(!siteMenuOpen)}
+                    aria-expanded={siteMenuOpen}
+                    aria-haspopup="true"
                     className="w-full flex items-center justify-between px-3 py-2 bg-[#26263a] hover:bg-[#313641] text-white rounded-[4px] transition-colors text-left cursor-pointer"
                   >
                     <div className="truncate pr-2">
@@ -148,7 +169,7 @@ export default function AppShellClient({
               )}
             </div>
 
-            {/* Navigation Links (Sentence case labels per Together AI specs) */}
+            {/* Navigation Links */}
             <nav className="space-y-1">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;

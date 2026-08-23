@@ -388,7 +388,8 @@ export function AuthFormCard({ children, className, ...props }: AuthFormCardProp
   );
 }
 
-// 11. ModalCard - canvas + hairline, radius-sm, Level 3 shadow allowed
+// 11. ModalCard - canvas + hairline, radius-sm, Level 3 shadow allowed.
+//     Closes on ESC and backdrop click; traps initial focus; locks body scroll.
 export interface ModalCardProps extends React.HTMLAttributes<HTMLDivElement> {
   isOpen: boolean;
   onClose: () => void;
@@ -405,13 +406,49 @@ export function ModalCard({
   className,
   ...props
 }: ModalCardProps) {
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const previouslyFocused = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+
+    // Focus the dialog itself so ESC works immediately without stealing
+    // focus from any specific control the caller wants focused.
+    const raf = requestAnimationFrame(() => dialogRef.current?.focus());
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKey);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+      previouslyFocused.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
         className={cn(
-          'bg-white border border-[#ebebeb] rounded-[4px] p-6 md:p-8 max-w-lg w-full shadow-[0_4px_10px_rgba(1,1,32,0.10)] relative',
+          'bg-white border border-[#ebebeb] rounded-[4px] p-6 md:p-8 max-w-lg w-full shadow-[0_4px_10px_rgba(1,1,32,0.10)] relative outline-none',
           className
         )}
         {...props}
@@ -423,6 +460,7 @@ export function ModalCard({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close dialog"
             className="font-mono text-[12px] uppercase text-[#71717a] hover:text-black cursor-pointer p-1"
           >
             ESC
@@ -468,19 +506,39 @@ export function EmptyStateCard({
   );
 }
 
-// 13. Toast - canvas + hairline, Level 3, caption
+// 13. Toast - canvas + hairline, Level 3, caption. Auto-dismisses after
+//     `duration` ms (timer resets when the message changes); pause on hover.
 export interface ToastProps {
   message: string;
   isVisible: boolean;
   onClose?: () => void;
+  duration?: number;
   className?: string;
 }
 
-export function Toast({ message, isVisible, onClose, className }: ToastProps) {
+export function Toast({ message, isVisible, onClose, duration = 4000, className }: ToastProps) {
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    if (!isVisible || !onClose) return;
+    timerRef.current = setTimeout(onClose, duration);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [message, isVisible, duration, onClose]);
+
   if (!isVisible) return null;
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      onMouseEnter={() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+      }}
+      onMouseLeave={() => {
+        if (onClose) timerRef.current = setTimeout(onClose, duration);
+      }}
       className={cn(
         'fixed bottom-6 right-6 z-50 bg-white border border-[#ebebeb] rounded-[4px] px-5 py-3 shadow-[0_4px_10px_rgba(1,1,32,0.10)] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200',
         className
@@ -492,6 +550,7 @@ export function Toast({ message, isVisible, onClose, className }: ToastProps) {
         <button
           type="button"
           onClick={onClose}
+          aria-label="Dismiss notification"
           className="ml-2 font-mono text-[11px] uppercase text-[#71717a] hover:text-black cursor-pointer"
         >
           ✕

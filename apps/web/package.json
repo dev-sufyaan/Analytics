@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aether/db": "workspace:*",
-    "@aether/ui": "workspace:*",
+    "@analytics/db": "workspace:*",
+    "@analytics/ui": "workspace:*",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.0",
     "clsx": "^2.1.1",

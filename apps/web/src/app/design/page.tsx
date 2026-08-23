@@ -30,7 +30,7 @@ import {
   UPlotChart,
   SegmentedProgressBar,
   TrendBadge,
-} from '@aether/ui';
+} from '@analytics/ui';
 import { Sparkles, Globe, Shield, RefreshCw, Layers } from 'lucide-react';
 
 export default function DesignKitchenSinkPage() {
@@ -56,7 +56,7 @@ export default function DesignKitchenSinkPage() {
       <div className="border-b border-[#ebebeb] pb-6 flex items-center justify-between">
         <div>
           <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-1">
-            TOGETHER AI DESIGN SYSTEM
+            ANALYTICS BY SUFYAAN STUDIO — DESIGN SYSTEM
           </span>
           <h1 className="font-display text-[36px] font-medium tracking-[-0.8px]">
             Design System Primitives & Tokens

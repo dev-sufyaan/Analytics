@@ -1,5 +1,5 @@
 {
-  "name": "@aether/db",
+  "name": "@analytics/db",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,7 +13,8 @@
     "./server": "./src/server.ts",
     "./middleware": "./src/middleware.ts",
     "./queries": "./src/queries.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./range": "./src/range.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.0",

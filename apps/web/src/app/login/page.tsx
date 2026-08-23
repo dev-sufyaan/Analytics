@@ -2,13 +2,13 @@
 
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createBrowserClient } from '@aether/db/client';
+import { createBrowserClient } from '@analytics/db/client';
 import {
   AuthFormCard,
   ButtonPrimary,
   ButtonOutline,
   TextInput,
-} from '@aether/ui';
+} from '@analytics/ui';
 
 function LoginForm() {
   const router = useRouter();
@@ -179,7 +179,7 @@ export default function LoginPage() {
       <header className="p-6 md:p-8 max-w-[1280px] w-full mx-auto flex items-center justify-between">
         <a href="/" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight">
           <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>aether</span>
+          <span>analytics</span>
         </a>
         <a
           href="/"
@@ -197,7 +197,7 @@ export default function LoginPage() {
               AUTHENTICATION
             </span>
             <h1 className="font-display text-[28px] font-medium text-white tracking-[-0.4px]">
-              Sign in to Aether
+              Sign in to Analytics
             </h1>
           </div>
 
@@ -209,7 +209,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="p-6 text-center text-[#71717a] font-display text-[12px]">
-        Aether Analytics • Privacy-first, cookie-free web metrics.
+        Analytics by Sufyaan Studio • Privacy-first, cookie-free web metrics.
       </footer>
     </div>
   );

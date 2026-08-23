@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
@@ -14,21 +14,20 @@ export interface UPlotChartProps {
   data: TimeseriesPoint[];
   height?: number;
   className?: string;
+  /** 'hour' buckets render time-of-day axis labels, 'day' renders dates. */
+  interval?: 'hour' | 'day';
+  /** Renders a shimmer skeleton instead of the empty-state message. */
+  loading?: boolean;
 }
 
-export function UPlotChart({ data, height = 260, className }: UPlotChartProps) {
+export function UPlotChart({ data, height = 260, className, interval = 'day', loading }: UPlotChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const readoutRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
-  const [hoverData, setHoverData] = useState<{
-    dateStr: string;
-    views: number;
-    visitors: number;
-  } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || data.length === 0) return;
 
-    // Ensure sorted timestamps
     const sorted = [...data].sort((a, b) => a.time - b.time);
     const timestamps = sorted.map((d) => d.time);
     const pageviews = sorted.map((d) => Number(d.pageviews) || 0);
@@ -39,6 +38,27 @@ export function UPlotChart({ data, height = 260, className }: UPlotChartProps) {
 
     const minTime = timestamps[0];
     const maxTime = timestamps[timestamps.length - 1];
+
+    // Direct DOM readout updates — no React state churn on every cursor move.
+    const renderReadout = (idx: number | null | undefined) => {
+      const el = readoutRef.current;
+      if (!el) return;
+      if (idx == null || idx < 0 || idx >= timestamps.length) {
+        el.style.visibility = 'hidden';
+        return;
+      }
+      const d = new Date(timestamps[idx] * 1000);
+      const dateStr =
+        interval === 'hour'
+          ? `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+          : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      el.innerHTML = `
+        <span class="font-medium text-black">${dateStr}</span>
+        <span class="text-black">Views: <strong class="text-black font-semibold">${pageviews[idx].toLocaleString()}</strong></span>
+        <span class="text-[#6461c2]">Visitors: <strong class="text-black font-semibold">${visitors[idx].toLocaleString()}</strong></span>
+      `;
+      el.style.visibility = 'visible';
+    };
 
     const opts: uPlot.Options = {
       width,
@@ -72,10 +92,12 @@ export function UPlotChart({ data, height = 260, className }: UPlotChartProps) {
           values: (u, vals) => {
             return vals.map((v) => {
               const d = new Date(v * 1000);
-              return d.toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-              });
+              if (interval === 'hour') {
+                return d.getHours() === 0
+                  ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                  : d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+              }
+              return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             });
           },
         },
@@ -124,21 +146,7 @@ export function UPlotChart({ data, height = 260, className }: UPlotChartProps) {
       hooks: {
         setCursor: [
           (u) => {
-            const idx = u.cursor.idx;
-            if (idx !== null && idx !== undefined && idx >= 0 && idx < timestamps.length) {
-              const d = new Date(timestamps[idx] * 1000);
-              setHoverData({
-                dateStr: d.toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                }),
-                views: pageviews[idx],
-                visitors: visitors[idx],
-              });
-            } else {
-              setHoverData(null);
-            }
+            renderReadout(u.cursor.idx);
           },
         ],
       },
@@ -170,12 +178,20 @@ export function UPlotChart({ data, height = 260, className }: UPlotChartProps) {
         plotRef.current = null;
       }
     };
-  }, [data, height]);
+  }, [data, height, interval]);
 
   if (data.length === 0) {
     return (
       <div className="w-full h-full min-h-[220px] flex items-center justify-center text-[#71717a] font-mono text-[11px] uppercase">
-        No timeseries data in selected range
+        {loading ? (
+          <span className="flex gap-1.5 items-center">
+            <span className="w-1.5 h-1.5 bg-[#ebebeb] rounded-full animate-pulse" />
+            <span className="w-1.5 h-1.5 bg-[#ebebeb] rounded-full animate-pulse [animation-delay:150ms]" />
+            <span className="w-1.5 h-1.5 bg-[#ebebeb] rounded-full animate-pulse [animation-delay:300ms]" />
+          </span>
+        ) : (
+          'No timeseries data in selected range'
+        )}
       </div>
     );
   }
@@ -183,17 +199,12 @@ export function UPlotChart({ data, height = 260, className }: UPlotChartProps) {
   return (
     <div className={className}>
       <div ref={containerRef} className="w-full relative" />
-      {hoverData && (
-        <div className="mt-3 flex items-center gap-5 px-3.5 py-2 bg-[#f7f7f7] border border-[#ebebeb] rounded-[4px] font-mono text-[11px] uppercase tracking-[0.05em] text-[#71717a]">
-          <span className="font-medium text-black">{hoverData.dateStr}</span>
-          <span className="text-black">
-            Views: <strong className="text-black font-semibold">{hoverData.views.toLocaleString()}</strong>
-          </span>
-          <span className="text-[#6461c2]">
-            Visitors: <strong className="text-black font-semibold">{hoverData.visitors.toLocaleString()}</strong>
-          </span>
-        </div>
-      )}
+      {/* Readout row is always mounted; hidden until hover so layout never jumps. */}
+      <div
+        ref={readoutRef}
+        style={{ visibility: 'hidden' }}
+        className="mt-3 flex items-center gap-5 px-3.5 py-2 bg-[#f7f7f7] border border-[#ebebeb] rounded-[4px] font-mono text-[11px] uppercase tracking-[0.05em] text-[#71717a]"
+      />
     </div>
   );
 }

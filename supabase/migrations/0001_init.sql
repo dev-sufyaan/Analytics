@@ -1,5 +1,5 @@
 -- supabase/migrations/0001_init.sql
--- Aether Analytics Schema & Security Definer RPCs
+-- Analytics by Sufyaan Studio Schema & Security Definer RPCs
 
 create extension if not exists "pgcrypto";
 

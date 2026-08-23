@@ -32,10 +32,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@aether/db':
+      '@analytics/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@aether/ui':
+      '@analytics/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@supabase/ssr':

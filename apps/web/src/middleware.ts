@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { updateSession } from '@aether/db/middleware';
+import { updateSession } from '@analytics/db/middleware';
 
 export async function middleware(request: NextRequest) {
   return await updateSession(request);

@@ -19,7 +19,7 @@ import {
   LiveDot,
   SegmentedProgressBar,
   TrendBadge,
-} from '@aether/ui';
+} from '@analytics/ui';
 import {
   Shield,
   Zap,
@@ -44,6 +44,7 @@ export default function MarketingHomePage() {
   // Simulated live visitors counter for hero widget
   const [simulatedVisitors, setSimulatedVisitors] = useState(482);
   const [simulatedViews, setSimulatedViews] = useState(1284);
+  const [githubStars, setGithubStars] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +61,16 @@ export default function MarketingHomePage() {
       setSimulatedViews((prev) => prev + (Math.random() > 0.4 ? 2 : 0));
     }, 4000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // GitHub stars — Umami is the inspiration, show social proof
+    fetch('https://api.github.com/repos/umami-software/umami')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.stargazers_count) setGithubStars(`${(j.stargazers_count / 1000).toFixed(1)}k`);
+      })
+      .catch(() => {});
   }, []);
 
   const snippets = {
@@ -100,7 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   <body><div id="root"></div></body>
 </html>`,
     event: `// Custom Conversion Tracking (e-commerce, signups)
-window.aether.track('checkout_completed', {
+window.analytics.track('checkout_completed', {
   plan: 'pro_annual',
   amount: 240,
   currency: 'USD'
@@ -110,15 +121,15 @@ window.aether.track('checkout_completed', {
   const faqs = [
     {
       q: 'Do I really not need a cookie consent banner?',
-      a: 'Yes, 100%. Because Aether does not use cookies, does not store raw IP addresses, and does not track users across days or separate websites, you are exempt from GDPR, ePrivacy, and CCPA consent banner mandates.',
+      a: 'Yes, 100%. Because Analytics does not use cookies, does not store raw IP addresses, and does not track users across days or separate websites, you are exempt from GDPR, ePrivacy, and CCPA consent banner mandates.',
     },
     {
-      q: 'How does Aether count unique visitors without cookies?',
-      a: 'Aether hashes the client IP address, User-Agent, and a cryptographic salt rotated daily at 00:00 UTC at the edge. The raw IP is immediately discarded, leaving an anonymous daily hash that cannot be linked across days.',
+      q: 'How does Analytics count unique visitors without cookies?',
+      a: 'Analytics hashes the client IP, User-Agent and a salt (daily by default, configurable to weekly/monthly via SALT_ROTATION) at the edge. Raw IP is discarded immediately — the hash cannot be linked across salt periods, preserving anonymity while keeping 30-day visitor counts honest.',
     },
     {
       q: 'Will the tracker slow down my website?',
-      a: 'Not at all. The tracker is only 939 bytes gzipped (approx. 45x smaller than Google Analytics 4). It loads asynchronously with the defer attribute and uses the non-blocking browser Beacon API.',
+      a: 'Not at all. The tracker is 1.15 KB gzipped (≤1.5 KB budget, 45× smaller than GA4, 0 dependencies). It loads asynchronously with defer and uses sendBeacon → fetch keepalive, so it never blocks rendering.',
     },
     {
       q: 'Can I track single-page apps (Next.js, React, Vue, SvelteKit)?',
@@ -136,7 +147,7 @@ window.aether.track('checkout_completed', {
       <NavBar isScrolled={isScrolled}>
         <Link href="/" className="flex items-center gap-2 font-display text-[20px] font-medium tracking-tight">
           <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>aether</span>
+          <span>analytics</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 font-display text-[15px]">
@@ -166,11 +177,24 @@ window.aether.track('checkout_completed', {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Headline & CTA */}
           <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 bg-[#26263a] px-3 py-1 rounded-[4px] mb-6">
-              <LiveDot />
-              <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#bdbbff]">
-                PRIVACY-FIRST ANALYTICS • ZERO COOKIES
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 bg-[#26263a] px-3 py-1 rounded-[4px]">
+                <LiveDot />
+                <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#bdbbff]">
+                  PRIVACY-FIRST ANALYTICS • ZERO COOKIES
+                </span>
+              </div>
+              <a
+                href="https://github.com/umami-software/umami"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 bg-white text-black px-3 py-1 rounded-[4px] font-mono text-[11px] font-medium hover:bg-[#f0f0f0] transition-colors"
+                title="Umami GitHub — inspiration, not a fork"
+              >
+                <span>★</span>
+                <span>{githubStars ? `${githubStars} stars` : 'GitHub stars'}</span>
+                <span className="text-[#71717a] hidden sm:inline">· Umami-inspired</span>
+              </a>
             </div>
 
             <h1 className="font-display text-[44px] sm:text-[56px] lg:text-[64px] font-medium leading-[1.08] tracking-[-1.92px] text-white mb-6">
@@ -402,7 +426,7 @@ window.aether.track('checkout_completed', {
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-black shrink-0" />
-                <span>Custom event tracking via <code className="font-mono text-[12px] bg-[#ebebeb] px-1 py-0.5 rounded">window.aether.track()</code></span>
+                <span>Custom event tracking via <code className="font-mono text-[12px] bg-[#ebebeb] px-1 py-0.5 rounded">window.analytics.track()</code></span>
               </li>
             </ul>
 
@@ -453,8 +477,8 @@ window.aether.track('checkout_completed', {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ResearchCard
             tag="01 // IDENTITY"
-            title="Daily Salted Hashes"
-            description="Visitor hashes rotate daily at 00:00 UTC using cryptographic salting. We cannot track individual humans across multiple days, preserving genuine anonymity."
+            title="Salted Visitor Hashes"
+            description="Visitor ID = hash(website + IP + UA + salt). Salt rotates daily by default (SALT_ROTATION=day|week|month). Raw IP is dropped at the edge — no cross-period tracking."
           />
           <ResearchCard
             tag="02 // INFRASTRUCTURE"
@@ -476,7 +500,7 @@ window.aether.track('checkout_completed', {
             COMPARISON
           </span>
           <h2 className="font-display text-[36px] font-medium tracking-[-0.8px] text-black">
-            How Aether compares
+            How Analytics compares
           </h2>
         </div>
 
@@ -485,7 +509,7 @@ window.aether.track('checkout_completed', {
             <thead className="bg-[#f7f7f7] border-b border-[#ebebeb] font-mono text-[11px] uppercase text-[#71717a]">
               <tr>
                 <th className="p-4">Feature</th>
-                <th className="p-4 bg-black text-white">Aether</th>
+                <th className="p-4 bg-black text-white">Analytics</th>
                 <th className="p-4">Google Analytics 4</th>
                 <th className="p-4">Standard SaaS</th>
               </tr>
@@ -493,7 +517,7 @@ window.aether.track('checkout_completed', {
             <tbody className="divide-y divide-[#ebebeb] font-display">
               <tr>
                 <td className="p-4 font-medium">Script Size</td>
-                <td className="p-4 bg-black/5 font-mono text-[13px] font-medium">≤1.5 KB (939 B)</td>
+                <td className="p-4 bg-black/5 font-mono text-[13px] font-medium">1.15 KB gzipped (≤1.5 KB)</td>
                 <td className="p-4 text-[#71717a]">~45 KB</td>
                 <td className="p-4 text-[#71717a]">15–30 KB</td>
               </tr>
@@ -510,10 +534,34 @@ window.aether.track('checkout_completed', {
                 <td className="p-4 text-[#71717a]">Often stored</td>
               </tr>
               <tr>
+                <td className="p-4 font-medium">UTM & Channel Attribution</td>
+                <td className="p-4 bg-black/5 font-medium">Auto (utm_source/medium/campaign + gclid/fbclid)</td>
+                <td className="p-4 text-[#71717a]">Manual / GA4 UI</td>
+                <td className="p-4 text-[#71717a]">Often paid</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">Entry / Exit Pages</td>
+                <td className="p-4 bg-black/5 font-medium">Top Pages + Entry/Exit tabs</td>
+                <td className="p-4 text-[#71717a]">Yes</td>
+                <td className="p-4 text-[#71717a]">Varies</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">Geography Drill-Down</td>
+                <td className="p-4 bg-black/5 font-medium">Country + Region/City (CF headers)</td>
+                <td className="p-4 text-[#71717a]">City-level</td>
+                <td className="p-4 text-[#71717a]">Country only</td>
+              </tr>
+              <tr>
                 <td className="p-4 font-medium">Public Share Links</td>
                 <td className="p-4 bg-black/5 font-medium">Included</td>
                 <td className="p-4 text-[#71717a]">No</td>
                 <td className="p-4 text-[#71717a]">Paid tier only</td>
+              </tr>
+              <tr>
+                <td className="p-4 font-medium">Self-Host Option</td>
+                <td className="p-4 bg-black/5 font-medium">Supabase + Cloudflare (you own DB)</td>
+                <td className="p-4 text-[#71717a]">No</td>
+                <td className="p-4 text-[#71717a]">Rare</td>
               </tr>
               <tr>
                 <td className="p-4 font-medium">Hosting Cost</td>

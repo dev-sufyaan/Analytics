@@ -1,5 +1,5 @@
 // apps/web/src/app/auth/callback/route.ts
-import { createServerClient } from '@aether/db/server';
+import { createServerClient } from '@analytics/db/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {

@@ -9,7 +9,7 @@ import {
   ButtonSecondaryMint,
   Footer,
   FooterWordmarkBanner,
-} from '@aether/ui';
+} from '@analytics/ui';
 import { Check, Clock, ChevronDown } from 'lucide-react';
 
 export default function PricingPage() {
@@ -39,7 +39,7 @@ export default function PricingPage() {
       <NavBar isScrolled={true}>
         <Link href="/" className="flex items-center gap-2 font-display text-[20px] font-medium tracking-tight">
           <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>aether</span>
+          <span>analytics</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 font-display text-[15px]">
@@ -72,7 +72,7 @@ export default function PricingPage() {
             Simple, honest plans.
           </h1>
           <p className="font-display text-[16px] text-[#71717a]">
-            Aether is currently 100% free with all core features included. Paid high-volume tiers are coming soon.
+            Analytics is currently 100% free with all core features included. Paid high-volume tiers are coming soon.
           </p>
         </div>
 
@@ -186,6 +186,39 @@ export default function PricingPage() {
               SOON
             </button>
           </div>
+        </div>
+
+        {/* Feature matrix — Umami parity highlight */}
+        <div className="max-w-4xl mx-auto mb-20">
+          <h3 className="font-display text-[22px] font-medium text-black mb-4 text-center">Everything you need to replace GA — today</h3>
+          <div className="border border-[#ebebeb] rounded-[4px] overflow-hidden">
+            <div className="grid grid-cols-3 gap-px bg-[#ebebeb] font-mono text-[11px] uppercase">
+              <div className="bg-[#f7f7f7] p-3 text-[#71717a]">Feature</div>
+              <div className="bg-black text-white p-3">Free ($0)</div>
+              <div className="bg-[#f7f7f7] p-3 text-[#71717a]">Pro ($9/mo)</div>
+            </div>
+            {[
+              ['Pageviews + Visitors', '✓', '✓'],
+              ['UTM / gclid / fbclid auto-capture', '✓', '✓'],
+              ['Top Pages / Referrers / Countries', '✓', '✓'],
+              ['Entry / Exit tabs', '✓ (preview)', '✓'],
+              ['Channels (utm_source)', '✓', '✓'],
+              ['Devices — Browser / OS / Device', '✓', '✓'],
+              ['World map + Region/City', 'Country live', 'Region/City live'],
+              ['CSV export — per table + full', '✓', '✓'],
+              ['Public share links', '✓', '✓'],
+              ['Realtime (5s poll)', '✓', '✓'],
+            ].map(([feat, free, pro]) => (
+              <div key={feat} className="grid grid-cols-3 gap-px bg-[#ebebeb] font-display text-[13px]">
+                <div className="bg-white p-3 font-medium">{feat}</div>
+                <div className="bg-[#fafafa] p-3 font-mono text-[12px]">{free}</div>
+                <div className="bg-white p-3 font-mono text-[12px] text-[#71717a]">{pro}</div>
+              </div>
+            ))}
+          </div>
+          <p className="font-mono text-[11px] uppercase text-[#999999] text-center mt-3">
+            Self-hosted? You own the Supabase DB + Cloudflare Worker. No vendor lock-in — wipe/export anytime from Settings.
+          </p>
         </div>
 
         {/* Pricing FAQ Section */}

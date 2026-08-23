@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, use } from 'react';
+import React, { useState, useEffect, useCallback, use, useMemo } from 'react';
 import Link from 'next/link';
-import { createBrowserClient } from '@aether/db/client';
-import { TopEvent } from '@aether/db/types';
+import { createBrowserClient } from '@analytics/db/client';
+import type { TopEvent } from '@analytics/db/types';
+import { rangeWindow, RANGE_OPTIONS } from '@analytics/db/range';
+import type { DashboardRange } from '@analytics/db/types';
 import {
   PanelCard,
   TogglePillGroup,
@@ -14,23 +16,20 @@ import {
   CodeEditorMockup,
   TextInput,
   Toast,
-} from '@aether/ui';
-import { RefreshCw, Zap, ArrowLeft, Send, Sparkles, Copy } from 'lucide-react';
+  SkeletonRows,
+} from '@analytics/ui';
+import { RefreshCw, Zap, ArrowLeft, Send, Search, AlertCircle } from 'lucide-react';
 
-export default function EventsBreakdownPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function EventsBreakdownPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: websiteId } = use(params);
-  const supabase = createBrowserClient();
-
-  const [range, setRange] = useState<'24h' | '7d' | '30d' | '90d'>('30d');
+  const supabase = React.useMemo(() => createBrowserClient(), []);
+  const [range, setRange] = useState<DashboardRange>('30d');
   const [events, setEvents] = useState<TopEvent[]>([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState('');
 
-  // Interactive Live Event Tester
   const [customEventName, setCustomEventName] = useState('button_click');
   const [customPropKey, setCustomPropKey] = useState('plan');
   const [customPropVal, setCustomPropVal] = useState('pro');
@@ -38,24 +37,19 @@ export default function EventsBreakdownPage({
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
-    const end = new Date();
-    const start = new Date();
-
-    if (range === '24h') start.setHours(start.getHours() - 24);
-    else if (range === '7d') start.setDate(start.getDate() - 7);
-    else if (range === '30d') start.setDate(start.getDate() - 30);
-    else if (range === '90d') start.setDate(start.getDate() - 90);
-
+    setError(null);
+    const { start, end } = rangeWindow(range);
     try {
-      const { data } = await supabase.rpc('get_top_events', {
+      const { data, error: rpcError } = await supabase.rpc('get_top_events', {
         p_website_id: websiteId,
         p_start: start.toISOString(),
         p_end: end.toISOString(),
-        p_limit: 50,
+        p_limit: 100,
       });
-      if (data) setEvents(data);
+      if (rpcError) throw new Error(rpcError.message);
+      setEvents((data as TopEvent[]) ?? []);
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : 'Failed to load events.');
     } finally {
       setLoading(false);
     }
@@ -65,6 +59,12 @@ export default function EventsBreakdownPage({
     fetchEvents();
   }, [fetchEvents]);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter((ev) => ev.event_name.toLowerCase().includes(q));
+  }, [events, search]);
+
   const handleSendTest = async () => {
     setSendingTest(true);
     try {
@@ -72,16 +72,10 @@ export default function EventsBreakdownPage({
         w: websiteId,
         n: customEventName.trim() || 'custom_event',
         u: typeof window !== 'undefined' ? window.location.pathname : '/',
-        p: { [customPropKey.trim()]: customPropVal.trim() },
+        p: { [customPropKey.trim() || 'value']: customPropVal.trim() || '1' },
       };
-
-      await fetch('/c', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      setToastMsg(`Test event '${payload.n}' sent successfully!`);
+      await fetch('/c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      setToastMsg(`Test event '${payload.n}' sent!`);
       setTimeout(fetchEvents, 1000);
     } catch (e: any) {
       setToastMsg(e.message || 'Error triggering test event');
@@ -91,85 +85,74 @@ export default function EventsBreakdownPage({
   };
 
   const dynamicCodeSnippet = `// Trigger this event in your frontend:
-window.aether.track('${customEventName || 'event_name'}', {
+window.analytics.track('${customEventName || 'event_name'}', {
   ${customPropKey || 'property'}: '${customPropVal || 'value'}'
 });`;
 
-  const maxEvents = events.length > 0 ? Math.max(...events.map((e) => Number(e.total_events))) : 1;
+  const maxEvents = filtered.length ? Math.max(...filtered.map((e) => Number(e.total_events))) : 1;
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 border-b border-[#ebebeb] gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <Link
-              href={`/app/${websiteId}`}
-              className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] hover:text-black transition-colors inline-flex items-center gap-1"
-            >
-              <ArrowLeft className="w-3 h-3" />
-              <span>BACK TO OVERVIEW</span>
-            </Link>
-          </div>
-          <h1 className="font-display text-[32px] md:text-[40px] font-medium tracking-[-0.8px] text-black">
-            Custom Events & Conversions
-          </h1>
+        <div className="min-w-0">
+          <Link href={`/app/${websiteId}`} className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] hover:text-black inline-flex items-center gap-1 mb-1.5">
+            <ArrowLeft className="w-3 h-3" /> BACK TO OVERVIEW
+          </Link>
+          <h1 className="font-display text-[28px] md:text-[40px] font-medium tracking-[-0.8px] text-black">Custom Events & Conversions</h1>
+          <p className="font-display text-[13px] text-[#71717a] mt-1">Track any user action with <code className="font-mono text-[11px] bg-[#f2f2f2] px-1 py-0.5 rounded">window.analytics.track()</code>.</p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <TogglePillGroup
-            options={[
-              { value: '24h', label: '24H' },
-              { value: '7d', label: '7D' },
-              { value: '30d', label: '30D' },
-              { value: '90d', label: '90D' },
-            ]}
-            value={range}
-            onChange={(val: any) => setRange(val)}
-          />
-          <ButtonOutline onClick={fetchEvents} className="px-3" title="Refresh">
+        <div className="flex flex-wrap items-center gap-3">
+          <TogglePillGroup options={RANGE_OPTIONS} value={range} onChange={setRange} />
+          <ButtonOutline onClick={fetchEvents} className="px-3" aria-label="Refresh">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </ButtonOutline>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Events Table Stream */}
-        <div className="lg:col-span-7">
-          <PanelCard title={`Recorded Custom Events (${events.length})`}>
-            {events.length === 0 ? (
-              <div className="py-12 text-center">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+        <div className="lg:col-span-7 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+            <h2 className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a]">RECORDED EVENTS</h2>
+            <div className="relative max-w-xs w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#999999] pointer-events-none" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filter events…" aria-label="Filter events" className="w-full bg-white text-black border border-[#ebebeb] rounded-[4px] pl-8 pr-3 h-8 text-[13px] placeholder:text-[#999999] focus-visible:outline-none focus-visible:border-black focus-visible:ring-1 focus-visible:ring-black" />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-[4px] flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 font-display text-[13px] text-red-900"><AlertCircle className="w-4 h-4" /> {error}</span>
+              <ButtonOutline type="button" onClick={fetchEvents} className="h-7 px-2.5 text-[11px]">RETRY</ButtonOutline>
+            </div>
+          )}
+
+          <PanelCard>
+            {loading ? (
+              <div className="border border-[#ebebeb] rounded-[4px] overflow-hidden">
+                <DataTableHeader columns={[{ label: 'EVENT NAME' }, { label: 'TRIGGERS', width: '120px', align: 'right' }, { label: 'VISITORS', width: '120px', align: 'right' }]} />
+                <SkeletonRows rows={6} columns={['55%', '70px', '70px']} />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="py-10 text-center">
                 <Zap className="w-8 h-8 text-[#999999] mx-auto mb-3" />
-                <h4 className="font-display text-[18px] font-medium text-black mb-1">No custom events recorded yet</h4>
-                <p className="font-display text-[14px] text-[#71717a] max-w-sm mx-auto mb-4">
-                  Trigger client events using the interactive builder on the right or via <code className="font-mono text-[12px] bg-[#ebebeb] px-1 py-0.5 rounded text-black">window.aether.track()</code>.
-                </p>
+                <h4 className="font-display text-[16px] font-medium text-black mb-1">{search ? `No events match “${search}”.` : 'No custom events recorded yet'}</h4>
+                {!search && (
+                  <p className="font-display text-[13px] text-[#71717a] max-w-sm mx-auto">
+                    Use the builder on the right or call <code className="font-mono text-[11px] bg-[#ebebeb] px-1 py-0.5 rounded text-black">window.analytics.track()</code> to send your first event.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="border border-[#ebebeb] rounded-[4px] overflow-hidden">
-                <DataTableHeader
-                  columns={[
-                    { label: 'EVENT NAME' },
-                    { label: 'TOTAL TRIGGERS', width: '140px', align: 'right' },
-                    { label: 'UNIQUE VISITORS', width: '140px', align: 'right' },
-                  ]}
-                />
-                {events.map((ev, idx) => (
-                  <DataTableRow
-                    key={idx}
-                    percent={(Number(ev.total_events) / maxEvents) * 100}
-                  >
-                    <div className="flex items-center gap-2 flex-1 pr-4">
-                      <span className="w-2 h-2 rounded-full bg-black shrink-0" />
-                      <span className="font-display text-[14px] text-black font-medium truncate">
-                        {ev.event_name}
-                      </span>
-                    </div>
-                    <span className="font-mono text-[13px] text-black w-[140px] text-right font-medium">
-                      {Number(ev.total_events).toLocaleString()}
+                <DataTableHeader columns={[{ label: 'EVENT NAME' }, { label: 'TRIGGERS', width: '120px', align: 'right' }, { label: 'VISITORS', width: '120px', align: 'right' }]} />
+                {filtered.map((ev, idx) => (
+                  <DataTableRow key={`${ev.event_name}-${idx}`} percent={(Number(ev.total_events) / maxEvents) * 100}>
+                    <span className="inline-flex items-center gap-2 flex-1 pr-4 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-black shrink-0" />
+                      <span className="font-display text-[14px] text-black font-medium truncate">{ev.event_name}</span>
                     </span>
-                    <span className="font-mono text-[13px] text-[#71717a] w-[140px] text-right">
-                      {Number(ev.unique_visitors).toLocaleString()}
-                    </span>
+                    <span className="font-mono text-[13px] text-black w-[120px] text-right font-medium shrink-0">{Number(ev.total_events).toLocaleString()}</span>
+                    <span className="font-mono text-[13px] text-[#71717a] w-[120px] text-right shrink-0">{Number(ev.unique_visitors).toLocaleString()}</span>
                   </DataTableRow>
                 ))}
               </div>
@@ -177,48 +160,21 @@ window.aether.track('${customEventName || 'event_name'}', {
           </PanelCard>
         </div>
 
-        {/* Interactive Event Builder & Playground */}
         <div className="lg:col-span-5 space-y-6">
           <PanelCard eyebrow="INTERACTIVE PLAYGROUND" title="Test & Generate Event Code">
-            <p className="font-display text-[14px] leading-[22px] text-[#71717a] mb-5">
-              Build and dispatch live test events directly to verify your dashboard ingestion pipeline.
-            </p>
-
+            <p className="font-display text-[13px] leading-[20px] text-[#71717a] mb-5">Dispatch a live test event to verify ingestion end-to-end. It will appear in the table within seconds.</p>
             <div className="space-y-4 mb-6">
-              <TextInput
-                label="EVENT NAME"
-                value={customEventName}
-                onChange={(e) => setCustomEventName(e.target.value)}
-                placeholder="e.g. signup_clicked"
-              />
-
+              <TextInput label="EVENT NAME" value={customEventName} onChange={(e) => setCustomEventName(e.target.value)} placeholder="e.g. signup_clicked" />
               <div className="grid grid-cols-2 gap-3">
-                <TextInput
-                  label="PROPERTY KEY"
-                  value={customPropKey}
-                  onChange={(e) => setCustomPropKey(e.target.value)}
-                  placeholder="e.g. plan"
-                />
-                <TextInput
-                  label="PROPERTY VALUE"
-                  value={customPropVal}
-                  onChange={(e) => setCustomPropVal(e.target.value)}
-                  placeholder="e.g. pro"
-                />
+                <TextInput label="PROPERTY KEY" value={customPropKey} onChange={(e) => setCustomPropKey(e.target.value)} placeholder="e.g. plan" />
+                <TextInput label="PROPERTY VALUE" value={customPropVal} onChange={(e) => setCustomPropVal(e.target.value)} placeholder="e.g. pro" />
               </div>
-
-              <ButtonPrimary
-                type="button"
-                onClick={handleSendTest}
-                disabled={sendingTest}
-                className="w-full flex items-center justify-center gap-2"
-              >
+              <ButtonPrimary type="button" onClick={handleSendTest} disabled={sendingTest} className="w-full flex items-center justify-center gap-2">
                 <Send className="w-3.5 h-3.5" />
-                <span>{sendingTest ? 'DISPATCHING EVENT...' : 'SEND LIVE TEST EVENT'}</span>
+                <span>{sendingTest ? 'DISPATCHING…' : 'SEND LIVE TEST EVENT'}</span>
               </ButtonPrimary>
             </div>
-
-            <CodeEditorMockup code={dynamicCodeSnippet} title="GENERATED JAVASCRIPT SNIPPET" />
+            <CodeEditorMockup code={dynamicCodeSnippet} title="GENERATED JAVASCRIPT" />
           </PanelCard>
         </div>
       </div>

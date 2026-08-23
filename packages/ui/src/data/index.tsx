@@ -215,3 +215,34 @@ export function LiveDot({ className }: { className?: string }) {
     </span>
   );
 }
+
+// 10. SkeletonRows - shimmer placeholder rows for data tables while loading.
+export function SkeletonRows({
+  rows = 5,
+  columns = ['60%', '80px'],
+  className,
+}: {
+  rows?: number;
+  /** Relative widths per cell, first column flexible. */
+  columns?: string[];
+  className?: string;
+}) {
+  return (
+    <div className={cn('w-full', className)} aria-hidden="true" role="presentation">
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} className="w-full bg-white border-b border-[#ebebeb] px-4 py-3.5 flex items-center gap-4">
+          {columns.map((width, c) => (
+            <div
+              key={c}
+              className={cn(
+                'h-3.5 bg-[#f0f0f0] rounded-[2px] animate-pulse',
+                c === 0 ? 'flex-1' : ''
+              )}
+              style={c === 0 ? undefined : { width }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
