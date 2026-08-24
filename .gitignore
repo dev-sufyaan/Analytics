@@ -1,9 +1,11 @@
 node_modules
 .next
+.open-next
 dist
 build
 .turbo
 .wrangler
+.dev.vars
 .env*.local
 .DS_Store
 *.log

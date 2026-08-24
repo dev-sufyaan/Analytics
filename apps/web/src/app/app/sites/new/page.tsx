@@ -13,6 +13,7 @@ import {
 } from '@analytics/ui';
 import { Sparkles, Copy, Check } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
+import { getCollectOrigin } from '@/lib/collect-url';
 
 export default function NewSitePage() {
   const router = useRouter();
@@ -99,14 +100,14 @@ export default function NewSitePage() {
   };
 
   const snippetCode = createdSite
-    ? `<script defer src="${typeof window !== 'undefined' ? window.location.origin : 'https://yourdomain.com'}/t.js" data-web="${createdSite.id}"></script>`
+    ? `<script defer src="${getCollectOrigin()}/t.js" data-web="${createdSite.id}"></script>`
     : '';
 
   const aiPrompt = createdSite
     ? buildAiPrompt({
         websiteId: createdSite.id,
         domain: createdSite.domain,
-        origin: typeof window !== 'undefined' ? window.location.origin : 'https://yourdomain.com',
+        origin: getCollectOrigin(),
         siteName: createdSite.name,
       })
     : '';

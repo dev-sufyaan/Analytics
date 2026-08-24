@@ -18,6 +18,7 @@ import {
 } from '@analytics/ui';
 import { Trash2, Copy, ExternalLink, ArrowLeft, AlertCircle, ShieldCheck, Sparkles, Check } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
+import { getCollectOrigin } from '@/lib/collect-url';
 
 export default function SiteSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: websiteId } = use(params);
@@ -134,7 +135,7 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
   };
 
   const snippetCode = website
-    ? `<script defer src="${typeof window !== 'undefined' ? window.location.origin : 'https://yourdomain.com'}/t.js" data-web="${website.id}"></script>`
+    ? `<script defer src="${getCollectOrigin()}/t.js" data-web="${website.id}"></script>`
     : '';
 
   const shareUrl = website ? `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${website.share_token}` : '';
@@ -228,7 +229,7 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
                 const prompt = buildAiPrompt({
                   websiteId: website.id,
                   domain: website.domain,
-                  origin: typeof window !== 'undefined' ? window.location.origin : 'https://yourdomain.com',
+                  origin: getCollectOrigin(),
                   siteName: website.name,
                 });
                 await navigator.clipboard.writeText(prompt);

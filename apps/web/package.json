@@ -22,7 +22,9 @@
     "uplot": "^1.6.31"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@types/node": "^22.0.0",
+    "wrangler": "^4.125.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.20",

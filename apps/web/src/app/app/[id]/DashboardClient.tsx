@@ -44,6 +44,7 @@ import {
   Check,
 } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
+import { getCollectOrigin } from '@/lib/collect-url';
 
 // Shared SWR store (packages/db/src/overview-store.ts) — the same 30s cache
 // powers every breakdown sub-page, so Overview → Pages costs zero requests.
@@ -198,7 +199,7 @@ export default function DashboardClient({ website }: { website: Website }) {
     const prompt = buildAiPrompt({
       websiteId: website.id,
       domain: website.domain,
-      origin: typeof window !== 'undefined' ? window.location.origin : 'https://yourdomain.com',
+      origin: getCollectOrigin(),
       siteName: website.name,
     });
     await navigator.clipboard.writeText(prompt);
@@ -243,7 +244,7 @@ export default function DashboardClient({ website }: { website: Website }) {
   const hasAnyData = !!stats && (stats.pageviews > 0 || stats.visitors > 0 || pages.length > 0 || referrers.length > 0 || channels.length > 0);
   const isFilteredEmpty = !!filter && !!stats && stats.pageviews === 0 && pages.length === 0 && referrers.length === 0 && channels.length === 0;
   const isInitialLoading = loading && !overview;
-  const snippetCode = `<script defer src="${typeof window !== 'undefined' ? window.location.origin : 'https://yourdomain.com'}/t.js" data-web="${website.id}"></script>`;
+  const snippetCode = `<script defer src="${getCollectOrigin()}/t.js" data-web="${website.id}"></script>`;
   const generatedLabel = overview?.generated_at
     ? new Date(overview.generated_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     : null;
