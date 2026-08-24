@@ -246,4 +246,59 @@ track_event("YOUR_WEBSITE_ID", "api_key_generated", "/settings/api", {"scope": "
       },
     ],
   },
+
+  'how-to-track-cloudflare-workers-edge-analytics': {
+    slug: 'how-to-track-cloudflare-workers-edge-analytics',
+    title: 'How to Track Traffic and APIs on Cloudflare Workers',
+    description: 'A developer guide to server-side analytics, subrequest tracking, and HTMLRewriter script injection on Cloudflare Workers and Pages.',
+    directAnswer:
+      'To track traffic on Cloudflare Workers, send an asynchronous POST subrequest to https://analytics-collect.sufyaanstudio.workers.dev/api/send inside ctx.waitUntil(), or use HTMLRewriter to inject the 1.15 KB tracker into outgoing HTML responses.',
+    readTime: '3 min read',
+    publishedAt: '2026-04-10T00:00:00.000Z',
+    updatedAt: '2026-08-24T00:00:00.000Z',
+    author: 'Sufyaan Studio Engineering',
+    steps: [
+      {
+        name: 'Step 1: Non-Blocking Subrequest via ctx.waitUntil',
+        text: 'In your Cloudflare Worker fetch handler, invoke ctx.waitUntil() to dispatch the pageview without adding any response latency.',
+        language: 'typescript',
+        code: `export default {
+  async fetch(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
+    const response = await fetch(request);
+    const url = new URL(request.url);
+
+    ctx.waitUntil(
+      fetch('https://analytics-collect.sufyaanstudio.workers.dev/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          w: env.ANALYTICS_WEBSITE_ID,
+          u: url.pathname + url.search,
+          r: request.headers.get('Referer') || '',
+        }),
+      })
+    );
+
+    return response;
+  }
+};`,
+      },
+      {
+        name: 'Step 2: Add Website UUID Secret in Wrangler',
+        text: 'Save your website UUID to your Cloudflare Worker configuration.',
+        language: 'bash',
+        code: `npx wrangler secret put ANALYTICS_WEBSITE_ID`,
+      },
+      {
+        name: 'Step 3: Monitor Ingestion in Live Realtime Dashboard',
+        text: 'Open your Analytics dashboard to observe real-time pageviews and geographic distribution instantly.',
+      },
+    ],
+    faq: [
+      {
+        question: 'Can I track both API endpoints and webpage visits with Cloudflare Workers?',
+        answer: 'Yes! You can record server-side API requests, webhook deliveries, and frontend pageviews with the same unified website UUID.',
+      },
+    ],
+  },
 };

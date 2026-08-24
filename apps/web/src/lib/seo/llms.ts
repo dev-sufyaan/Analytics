@@ -37,12 +37,21 @@ export function generateLlmsTxt(): string {
 
 > ${SITE_CONFIG.entityStatement}
 
-## Core Information
+## Developer & Agent Resources (Machine-Readable)
 
-- [Homepage](${SITE_CONFIG.baseUrl}): Privacy-first website analytics overview and live demo.
+- [OpenAPI 3.1.0 Specification (JSON)](${SITE_CONFIG.baseUrl}/openapi.json): Standard machine-readable OpenAPI 3.1.0 REST API catalog.
+- [OpenAPI 3.1.0 Specification (YAML)](${SITE_CONFIG.baseUrl}/openapi.yaml): OpenAPI specification in YAML format.
+- [Model Context Protocol (MCP) Manifest](${SITE_CONFIG.baseUrl}/mcp.json): Official tool and resource definition for AI agents (Cursor, Claude, OpenAI).
+- [Documentation Index](${SITE_CONFIG.baseUrl}/docs): Developer quick-start, API guide, and tracking snippet reference.
+- [Cloudflare Workers Integration](${SITE_CONFIG.baseUrl}/integrations/cloudflare-workers): Edge server-side tracking, HTMLRewriter script injection, and subrequests.
+- [XML Sitemap](${SITE_CONFIG.baseUrl}/sitemap.xml): Full machine-readable site index with lastmod timestamps.
+- [Security Disclosure](${SITE_CONFIG.baseUrl}/.well-known/security.txt): Responsible vulnerability disclosure guidelines.
+
+## Core Navigation
+
+- [Homepage](${SITE_CONFIG.baseUrl}): Privacy-first website analytics overview, live metrics, and feature breakdown.
 - [Pricing](${SITE_CONFIG.baseUrl}/pricing): Free Community ($0) and Pro Scale ($9) tier details.
-- [Documentation](${SITE_CONFIG.baseUrl}/docs): Comprehensive developer integration and tracking API reference.
-- [Design System](${SITE_CONFIG.baseUrl}/design): Interactive design tokens and component showcase.
+- [Design System](${SITE_CONFIG.baseUrl}/design): Interactive design tokens, typography, and component showcase.
 - [Privacy Pillar](${SITE_CONFIG.baseUrl}/privacy-first-analytics): Deep-dive guide to cookie-free analytics and GDPR compliance.
 
 ## Competitor Comparisons & Alternatives
@@ -53,11 +62,11 @@ ${competitorLinks}
 
 ${featureLinks}
 
-## Use-Cases & Solutions
+## Use-Cases & Persona Solutions
 
 ${useCaseLinks}
 
-## Framework Integrations
+## Framework & Cloudflare Workers Integrations
 
 ${integrationLinks}
 

@@ -14,8 +14,9 @@
     "test:rpc": "node scripts/test/rpc.test.mjs",
     "test:e2e": "node scripts/test/e2e-collect.test.mjs",
     "test:load": "node scripts/test/load.mjs",
+    "test:agentic": "npx -y tsx scripts/test/agentic-readiness.test.mjs",
     "test:integration": "node scripts/test/rpc.test.mjs && node scripts/test/e2e-collect.test.mjs",
-    "test:all": "npm run test && npm run test:integration && node scripts/test/load.mjs"
+    "test:all": "npm run test && npm run test:agentic && npm run test:integration && node scripts/test/load.mjs"
   },
   "devDependencies": {
     "dotenv": "^16.4.7",

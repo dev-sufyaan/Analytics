@@ -31,10 +31,13 @@ export const SITE_CONFIG = {
     'PostHog alternative',
     'lightweight website analytics',
     'edge analytics',
+    'Cloudflare Workers analytics',
     'real-time website analytics',
     'Next.js analytics',
     'React website analytics',
     'WordPress privacy analytics',
+    'OpenAPI analytics spec',
+    'MCP analytics server',
     'Sufyaan Studio',
   ],
   socialHandles: {
@@ -44,4 +47,6 @@ export const SITE_CONFIG = {
   },
   trackerSnippetUrl: `${BASE_URL}/t.js`,
   ingestEndpoint: `${BASE_URL}/c`,
+  openApiUrl: `${BASE_URL}/openapi.json`,
+  mcpUrl: `${BASE_URL}/mcp.json`,
 } as const;

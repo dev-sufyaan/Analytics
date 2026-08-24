@@ -1564,4 +1564,98 @@ export default function App() {
     ],
     updatedAt: '2026-08-24T00:00:00.000Z',
   },
+
+  'cloudflare-workers': {
+    slug: 'cloudflare-workers',
+    name: 'Cloudflare Workers & Edge',
+    category: 'Serverless / Edge',
+    directAnswer:
+      'To track traffic on Cloudflare Workers, dispatch server-side subrequests directly to the Analytics ingest endpoint or inject the client-side tracker into HTML responses via HTMLRewriter.',
+    description: 'Deploy lightning-fast edge analytics on Cloudflare Workers, Pages, and serverless compute with zero cold starts and sub-50ms global latency.',
+    prerequisites: ['Cloudflare Workers / Pages project', 'Website UUID', 'Wrangler CLI'],
+    steps: [
+      {
+        title: 'Option A: Edge Server-Side Tracking in Worker',
+        description: 'Send event payloads directly from your Cloudflare Worker fetch handler using ctx.waitUntil().',
+        language: 'typescript',
+        code: `// Cloudflare Worker (index.ts)
+export default {
+  async fetch(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
+    const response = await fetch(request);
+    const url = new URL(request.url);
+
+    // Non-blocking edge analytics dispatch
+    ctx.waitUntil(
+      fetch('https://analytics-collect.sufyaanstudio.workers.dev/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': request.headers.get('User-Agent') || '',
+          'CF-Connecting-IP': request.headers.get('CF-Connecting-IP') || '',
+          'CF-IPCountry': request.headers.get('CF-IPCountry') || '',
+        },
+        body: JSON.stringify({
+          w: env.ANALYTICS_WEBSITE_ID,
+          u: url.pathname + url.search,
+          r: request.headers.get('Referer') || '',
+        }),
+      })
+    );
+
+    return response;
+  },
+};`,
+      },
+      {
+        title: 'Option B: HTMLRewriter Client Script Injection',
+        description: 'Inject the 1.15 KB tracker tag into outgoing HTML responses dynamically at the edge.',
+        language: 'typescript',
+        code: `// HTMLRewriter script injection in Cloudflare Worker
+export default {
+  async fetch(request: Request, env: any): Promise<Response> {
+    const res = await fetch(request);
+    if (!res.headers.get('content-type')?.includes('text/html')) {
+      return res;
+    }
+
+    return new HTMLRewriter()
+      .on('head', {
+        element(el) {
+          el.append(
+            \`<script defer src="https://analytics.sufyaanstudio.workers.dev/t.js" data-web="\${env.ANALYTICS_WEBSITE_ID}"></script>\`,
+            { html: true }
+          );
+        },
+      })
+      .transform(res);
+  },
+};`,
+      },
+      {
+        title: 'Configure Wrangler Environment Variables',
+        description: 'Set your website UUID in wrangler.jsonc or wrangler.toml.',
+        language: 'json',
+        code: `// wrangler.jsonc
+{
+  "name": "my-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-22",
+  "vars": {
+    "ANALYTICS_WEBSITE_ID": "YOUR_WEBSITE_UUID"
+  }
+}`,
+      },
+    ],
+    faq: [
+      {
+        question: 'Does server-side worker tracking use visitor cookies?',
+        answer: 'No. The edge ingestion worker generates a daily-salted SHA-256 hash using the incoming IP and user agent, then immediately discards the raw IP.',
+      },
+      {
+        question: 'Does ctx.waitUntil impact Worker response latency?',
+        answer: 'No. ctx.waitUntil executes asynchronously after the client response stream is returned, ensuring 0ms added user latency.',
+      },
+    ],
+    updatedAt: '2026-08-24T00:00:00.000Z',
+  },
 };
