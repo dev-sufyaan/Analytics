@@ -111,56 +111,81 @@ export function Footer({ className }: { className?: string }) {
   return (
     <footer className={cn('w-full bg-white border-t border-[#ebebeb] py-16 md:py-20', className)}>
       <div className="max-w-[1280px] mx-auto px-4 md:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
           <div>
             <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] block mb-4">
               PRODUCT
             </span>
             <ul className="space-y-2.5 font-display text-[14px] text-[#71717a]">
               <li><a href="/" className="hover:text-black transition-colors">Overview</a></li>
-              <li><a href="/pricing" className="hover:text-black transition-colors">Pricing</a></li>
+              <li><a href="/features" className="hover:text-black transition-colors">All Features</a></li>
+              <li><a href="/pricing" className="hover:text-black transition-colors">Pricing ($0 Free)</a></li>
               <li><a href="/docs" className="hover:text-black transition-colors">Documentation</a></li>
+              <li><a href="/privacy-first-analytics" className="hover:text-black transition-colors">Privacy Guide</a></li>
               <li><a href="/design" className="hover:text-black transition-colors">Design System</a></li>
             </ul>
           </div>
+
+          <div>
+            <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] block mb-4">
+              ALTERNATIVES
+            </span>
+            <ul className="space-y-2.5 font-display text-[14px] text-[#71717a]">
+              <li><a href="/alternatives/ga4" className="hover:text-black transition-colors">vs Google Analytics 4</a></li>
+              <li><a href="/alternatives/plausible" className="hover:text-black transition-colors">vs Plausible</a></li>
+              <li><a href="/alternatives/fathom" className="hover:text-black transition-colors">vs Fathom</a></li>
+              <li><a href="/alternatives/umami" className="hover:text-black transition-colors">vs Umami</a></li>
+              <li><a href="/alternatives/simple-analytics" className="hover:text-black transition-colors">vs Simple Analytics</a></li>
+              <li><a href="/alternatives" className="hover:text-black transition-colors font-medium text-black">All Comparisons →</a></li>
+            </ul>
+          </div>
+
           <div>
             <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] block mb-4">
               INTEGRATIONS
             </span>
             <ul className="space-y-2.5 font-display text-[14px] text-[#71717a]">
-              <li><a href="/docs#nextjs" className="hover:text-black transition-colors">Next.js</a></li>
-              <li><a href="/docs#react" className="hover:text-black transition-colors">React / Vite</a></li>
-              <li><a href="/docs#vue" className="hover:text-black transition-colors">Vue / Nuxt</a></li>
-              <li><a href="/docs#svelte" className="hover:text-black transition-colors">SvelteKit</a></li>
-              <li><a href="/docs#astro" className="hover:text-black transition-colors">Astro</a></li>
-              <li><a href="/docs#wordpress" className="hover:text-black transition-colors">WordPress / CMS</a></li>
+              <li><a href="/integrations/nextjs" className="hover:text-black transition-colors">Next.js</a></li>
+              <li><a href="/integrations/react" className="hover:text-black transition-colors">React & Vite</a></li>
+              <li><a href="/integrations/astro" className="hover:text-black transition-colors">Astro</a></li>
+              <li><a href="/integrations/sveltekit" className="hover:text-black transition-colors">SvelteKit</a></li>
+              <li><a href="/integrations/wordpress" className="hover:text-black transition-colors">WordPress</a></li>
+              <li><a href="/integrations" className="hover:text-black transition-colors font-medium text-black">All Frameworks →</a></li>
             </ul>
           </div>
+
           <div>
             <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] block mb-4">
-              PRIVACY
+              FREE TOOLS & GUIDES
             </span>
             <ul className="space-y-2.5 font-display text-[14px] text-[#71717a]">
-              <li><span className="text-[#71717a]">No Cookies</span></li>
-              <li><span className="text-[#71717a]">No IP Storage</span></li>
-              <li><span className="text-[#71717a]">Daily Salted Hashes</span></li>
-              <li><span className="text-[#71717a]">GDPR / CCPA Compliant</span></li>
+              <li><a href="/tools/ga4-speed-calculator" className="hover:text-black transition-colors">GA4 Speed Calculator</a></li>
+              <li><a href="/tools/utm-campaign-builder" className="hover:text-black transition-colors">UTM Tag Builder</a></li>
+              <li><a href="/tools/gdpr-cookie-exemption-checker" className="hover:text-black transition-colors">GDPR Checker</a></li>
+              <li><a href="/how-to/how-to-track-nextjs-spa-without-cookies" className="hover:text-black transition-colors">Next.js SPA Tutorial</a></li>
+              <li><a href="/how-to/how-to-track-custom-conversion-events" className="hover:text-black transition-colors">Custom Events API</a></li>
+              <li><a href="/tools" className="hover:text-black transition-colors font-medium text-black">All Free Tools →</a></li>
             </ul>
           </div>
+
           <div>
             <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] block mb-4">
-              PROJECT
+              SOLUTIONS
             </span>
             <ul className="space-y-2.5 font-display text-[14px] text-[#71717a]">
-              <li><a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-black transition-colors">GitHub</a></li>
-              <li><a href="/login" className="hover:text-black transition-colors">Sign In</a></li>
+              <li><a href="/use-cases/indie-hackers" className="hover:text-black transition-colors">For Indie Hackers</a></li>
+              <li><a href="/use-cases/saas-startups" className="hover:text-black transition-colors">For SaaS Startups</a></li>
+              <li><a href="/use-cases/agencies" className="hover:text-black transition-colors">For Agencies</a></li>
+              <li><a href="/use-cases/blogs-publishers" className="hover:text-black transition-colors">For Tech Blogs</a></li>
+              <li><a href="/login" className="hover:text-black transition-colors">Sign In / Dashboard</a></li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-[#ebebeb] flex flex-col md:flex-row items-center justify-between text-[#71717a] font-display text-[13px] gap-4">
-          <p>© {new Date().getFullYear()} Analytics by Sufyaan Studio. Privacy-first, open architecture.</p>
+          <p>© {new Date().getFullYear()} Analytics by Sufyaan Studio. Best-in-class privacy-first analytics.</p>
           <div className="flex items-center gap-6">
+            <a href="/llms.txt" className="hover:text-black transition-colors font-mono text-[11px]">llms.txt</a>
             <a href="/docs" className="hover:text-black transition-colors">Docs</a>
             <a href="/pricing" className="hover:text-black transition-colors">Pricing</a>
             <a href="/login" className="hover:text-black transition-colors">Login</a>

@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createBrowserClient } from '@analytics/db/client';
 import {
   AuthFormCard,
@@ -24,23 +25,6 @@ function LoginForm() {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   const supabase = createBrowserClient();
-
-  const handleGitHubAuth = async () => {
-    setLoading(true);
-    setErrorMsg('');
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
-        },
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to initialize GitHub OAuth');
-      setLoading(false);
-    }
-  };
 
   const handleEmailPasswordAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,27 +85,6 @@ function LoginForm() {
         </div>
       ) : (
         <div>
-          {/* GitHub OAuth */}
-          <button
-            type="button"
-            onClick={handleGitHubAuth}
-            disabled={loading}
-            className="w-full h-11 bg-[#010120] hover:bg-[#1a1a3a] text-white rounded-[4px] font-mono text-[13px] font-medium uppercase tracking-[0.06em] flex items-center justify-center gap-3 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-              <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-            </svg>
-            CONTINUE WITH GITHUB
-          </button>
-
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-[#ebebeb]" />
-            <span className="px-3 font-mono text-[10px] uppercase text-[#999999] tracking-wider">
-              OR WITH EMAIL
-            </span>
-            <div className="flex-1 border-t border-[#ebebeb]" />
-          </div>
-
           <form onSubmit={handleEmailPasswordAuth} className="space-y-4">
             <TextInput
               label="EMAIL ADDRESS"
@@ -177,16 +140,16 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#010120] flex flex-col justify-between">
       {/* Top Header */}
       <header className="p-6 md:p-8 max-w-[1280px] w-full mx-auto flex items-center justify-between">
-        <a href="/" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight">
+        <Link href="/" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight">
           <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
           <span>analytics</span>
-        </a>
-        <a
+        </Link>
+        <Link
           href="/"
           className="font-mono text-[11px] font-medium uppercase text-[#999999] hover:text-white transition-colors"
         >
           ← BACK TO HOME
-        </a>
+        </Link>
       </header>
 
       {/* Main Form Center */}

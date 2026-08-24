@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { SITE_CONFIG } from '@/lib/seo/seo-config';
+import { getOrganizationSchema, getWebSiteSchema, getSoftwareApplicationSchema } from '@/lib/seo/json-ld';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,31 +18,15 @@ const geistMono = Geist_Mono({
   weight: ['400', '500'],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://analytics.sufyaan.studio';
-
-const TITLE = 'Analytics by Sufyaan Studio — Privacy-First Website Analytics';
-const DESCRIPTION =
-  'Simple privacy-first analytics. No cookies. No fingerprint theatre. A dashboard you actually enjoy opening. Built by Sufyaan Studio.';
-
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  applicationName: 'Analytics by Sufyaan Studio',
+  metadataBase: new URL(SITE_CONFIG.baseUrl),
+  applicationName: SITE_CONFIG.name,
   title: {
-    default: TITLE,
-    template: '%s · Analytics by Sufyaan Studio',
+    default: SITE_CONFIG.defaultTitle,
+    template: SITE_CONFIG.titleTemplate,
   },
-  description: DESCRIPTION,
-  keywords: [
-    'privacy-first analytics',
-    'cookie-free analytics',
-    'website analytics',
-    'GDPR compliant analytics',
-    'Umami alternative',
-    'Plausible alternative',
-    'lightweight analytics',
-    'edge ingest analytics',
-    'Sufyaan Studio',
-  ],
+  description: SITE_CONFIG.defaultDescription,
+  keywords: [...SITE_CONFIG.keywords],
   authors: [{ name: 'Sufyaan Studio' }],
   creator: 'Sufyaan Studio',
   publisher: 'Sufyaan Studio',
@@ -48,16 +34,26 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
-    siteName: 'Analytics by Sufyaan Studio',
-    title: TITLE,
-    description: DESCRIPTION,
-    url: SITE_URL,
+    siteName: SITE_CONFIG.name,
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    url: SITE_CONFIG.baseUrl,
     locale: 'en_US',
+    alternateLocale: ['en_GB', 'en_CA', 'en_AU', 'en_IN', 'en_IE', 'en_NZ', 'en_SG', 'de_DE', 'fr_FR'],
+    images: [
+      {
+        url: `${SITE_CONFIG.baseUrl}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: SITE_CONFIG.defaultTitle,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: TITLE,
-    description: DESCRIPTION,
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    images: [`${SITE_CONFIG.baseUrl}/opengraph-image`],
   },
   robots: {
     index: true,
@@ -72,20 +68,9 @@ export const viewport: Viewport = {
 };
 
 const jsonLd = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Sufyaan Studio',
-    url: SITE_URL,
-    description: 'Independent studio behind Analytics — a privacy-first website analytics product.',
-  },
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Analytics by Sufyaan Studio',
-    url: SITE_URL,
-    inLanguage: 'en',
-  },
+  getOrganizationSchema(),
+  getWebSiteSchema(),
+  getSoftwareApplicationSchema(),
 ];
 
 export default function RootLayout({

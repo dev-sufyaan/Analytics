@@ -2,15 +2,15 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { SiteHeader } from '@/components/navigation/SiteHeader';
 import {
-  NavBar,
-  NavLink,
   ButtonPrimary,
   ButtonSecondaryMint,
   Footer,
   FooterWordmarkBanner,
 } from '@analytics/ui';
-import { Check, Clock, ChevronDown } from 'lucide-react';
+import { AnswerBlock } from '@/components/seo/AnswerBlock';
+import { Check, Clock, ChevronDown, ArrowRight } from 'lucide-react';
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -36,35 +36,10 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col justify-between">
-      <NavBar isScrolled={true}>
-        <Link href="/" className="flex items-center gap-2 font-display text-[20px] font-medium tracking-tight">
-          <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>analytics</span>
-        </Link>
+      <SiteHeader forceLight={true} />
 
-        <nav className="hidden md:flex items-center gap-8 font-display text-[15px]">
-          <NavLink href="/#features">Features</NavLink>
-          <NavLink href="/pricing" active={true}>Pricing</NavLink>
-          <NavLink href="/docs">Documentation</NavLink>
-          <NavLink href="/design">Design System</NavLink>
-        </nav>
-
-        <div className="flex items-center gap-4">
-          <Link href="/login">
-            <span className="font-display text-[14px] font-medium text-black hover:text-black/70">
-              Sign in
-            </span>
-          </Link>
-          <Link href="/login">
-            <ButtonPrimary className="text-[12px] h-9 px-4">
-              GET STARTED
-            </ButtonPrimary>
-          </Link>
-        </div>
-      </NavBar>
-
-      <main className="max-w-[1280px] w-full mx-auto px-4 md:px-8 py-16 md:py-24">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+      <main className="max-w-[1280px] w-full mx-auto px-4 md:px-8 py-12 md:py-16">
+        <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
             TRANSPARENT PRICING
           </span>
@@ -72,12 +47,23 @@ export default function PricingPage() {
             Simple, honest plans.
           </h1>
           <p className="font-display text-[16px] text-[#71717a]">
-            Analytics is currently 100% free with all core features included. Paid high-volume tiers are coming soon.
+            Analytics by Sufyaan Studio includes a generous free community tier with all core features included.
           </p>
         </div>
 
+        <AnswerBlock
+          title="Pricing Overview / Direct Answer"
+          directAnswer="Analytics by Sufyaan Studio offers a 100% free Community Plan supporting up to 25,000 monthly events with 30-day raw retention and permanent historical rollups. No credit card is required to get started."
+          keyTakeaways={[
+            'Community Plan: $0/month forever with 25,000 events',
+            'Pro Plan: $9/month with 250,000 events and 1-year raw retention',
+            'No surprise overages or automatic card charges',
+            'Full data sovereignty with Supabase PostgreSQL export',
+          ]}
+        />
+
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto my-16">
           {/* Free Tier - Active */}
           <div className="border-2 border-black rounded-[4px] p-8 flex flex-col justify-between bg-white relative shadow-xs">
             <div className="absolute top-4 right-4">
@@ -117,7 +103,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-3">
                   <Check className="w-4 h-4 text-black shrink-0" />
-                  <span>Realtime visitor tracking</span>
+                  <span>Realtime visitor tracking (5s live feed)</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Check className="w-4 h-4 text-black shrink-0" />
@@ -188,9 +174,11 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Feature matrix — Umami parity highlight */}
+        {/* Feature matrix */}
         <div className="max-w-4xl mx-auto mb-20">
-          <h3 className="font-display text-[22px] font-medium text-black mb-4 text-center">Everything you need to replace GA — today</h3>
+          <h3 className="font-display text-[22px] font-medium text-black mb-4 text-center">
+            Best-in-Class Feature Breakdown
+          </h3>
           <div className="border border-[#ebebeb] rounded-[4px] overflow-hidden">
             <div className="grid grid-cols-3 gap-px bg-[#ebebeb] font-mono text-[11px] uppercase">
               <div className="bg-[#f7f7f7] p-3 text-[#71717a]">Feature</div>
@@ -215,6 +203,12 @@ export default function PricingPage() {
                 <div className="bg-white p-3 font-mono text-[12px] text-[#71717a]">{pro}</div>
               </div>
             ))}
+          </div>
+          <div className="flex justify-center mt-4">
+            <Link href="/alternatives" className="font-mono text-[11px] uppercase text-black font-medium hover:underline inline-flex items-center gap-1">
+              <span>COMPARE OUR SPECS WITH OTHER ANALYTICS TOOLS</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
           <p className="font-mono text-[11px] uppercase text-[#999999] text-center mt-3">
             Self-hosted? You own the Supabase DB + Cloudflare Worker. No vendor lock-in — wipe/export anytime from Settings.

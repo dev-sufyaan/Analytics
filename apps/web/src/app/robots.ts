@@ -1,15 +1,51 @@
 import type { MetadataRoute } from 'next';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://analytics.sufyaan.studio';
+import { SITE_CONFIG } from '@/lib/seo/seo-config';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/app', '/login', '/auth', '/design', '/s/', '/api'],
-    },
-    sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c', '/api/internal'],
+      },
+      {
+        userAgent: 'GPTBot',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+      {
+        userAgent: 'ClaudeBot',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+      {
+        userAgent: 'PerplexityBot',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+      {
+        userAgent: 'Google-Extended',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+      {
+        userAgent: 'CCBot',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+      {
+        userAgent: 'Applebot',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+      {
+        userAgent: 'Bytespider',
+        allow: '/',
+        disallow: ['/app', '/login', '/auth', '/s/', '/c'],
+      },
+    ],
+    sitemap: `${SITE_CONFIG.baseUrl}/sitemap.xml`,
+    host: SITE_CONFIG.baseUrl,
   };
 }

@@ -23,7 +23,7 @@ Source of truth: packages/tracker/src/t.ts (1.15KB gzipped, ≤1.5KB budget) + a
 Add privacy-first, cookie-less pageview + custom-event tracking to this codebase. The install must be framework-aware, idempotent, and verifiable in <2 minutes.
 
 ## 2. PROJECT CONTEXT
-- Product: Analytics by Sufyaan Studio — Umami-class, not a GA4 clone. Tiny tracker, edge ingest, instant dashboard.
+- Product: Analytics by Sufyaan Studio — Best-in-class privacy-first website analytics. Tiny tracker, edge ingest, instant dashboard.
 - Tracker: vanilla JS, 0 deps, window.analytics (not window.aether/umami). Global: window.analytics.track(name, props), window.analytics.pageview(), window.analytics.flush()
 - Collect: POST ${origin}/c (Cloudflare Worker, also /t.js). 16KB body cap, 10 events/batch. Returns 204 always (never 500). Validate via ingest-guards.mjs logic — do NOT proxy through Next.js /api.
 - Privacy: No cookies, no localStorage ID, no raw IP stored. visitor_hash = sha256(websiteId:ip:ua:salt) salt rotates daily (SALT_ROTATION=day|week|month, default day). Do not fingerprint.

@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  NavBar,
-  NavLink,
   HeroBandDark,
   ResearchBandDark,
   ResearchCard,
@@ -20,6 +18,8 @@ import {
   SegmentedProgressBar,
   TrendBadge,
 } from '@analytics/ui';
+import { AnswerBlock } from '@/components/seo/AnswerBlock';
+import { SiteHeader } from '@/components/navigation/SiteHeader';
 import {
   Shield,
   Zap,
@@ -34,25 +34,16 @@ import {
   Smartphone,
   Eye,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function MarketingHomePage() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [activeSnippetTab, setActiveSnippetTab] = useState<'nextjs' | 'html' | 'react' | 'event'>('nextjs');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // Simulated live visitors counter for hero widget
   const [simulatedVisitors, setSimulatedVisitors] = useState(482);
   const [simulatedViews, setSimulatedViews] = useState(1284);
-  const [githubStars, setGithubStars] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     // Gentle live counter tick for demo realism
@@ -61,16 +52,6 @@ export default function MarketingHomePage() {
       setSimulatedViews((prev) => prev + (Math.random() > 0.4 ? 2 : 0));
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    // GitHub stars — Umami is the inspiration, show social proof
-    fetch('https://api.github.com/repos/umami-software/umami')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        if (j && j.stargazers_count) setGithubStars(`${(j.stargazers_count / 1000).toFixed(1)}k`);
-      })
-      .catch(() => {});
   }, []);
 
   const snippets = {
@@ -83,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <Script
           defer
-          src="https://yourdomain.com/t.js"
+          src="https://analytics.sufyaan.studio/t.js"
           data-web="13921d15-5a3b-4b3d-ae89-b49255ee3381"
           strategy="afterInteractive"
         />
@@ -95,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     html: `<!-- Standard HTML5 / Static Web Page -->
 <script
   defer
-  src="https://yourdomain.com/t.js"
+  src="https://analytics.sufyaan.studio/t.js"
   data-web="13921d15-5a3b-4b3d-ae89-b49255ee3381"
 ></script>`,
     react: `<!-- React / Vite index.html -->
@@ -104,7 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   <head>
     <script
       defer
-      src="https://yourdomain.com/t.js"
+      src="https://analytics.sufyaan.studio/t.js"
       data-web="13921d15-5a3b-4b3d-ae89-b49255ee3381"
     ></script>
   </head>
@@ -125,52 +106,26 @@ window.analytics.track('checkout_completed', {
     },
     {
       q: 'How does Analytics count unique visitors without cookies?',
-      a: 'Analytics hashes the client IP, User-Agent and a salt (daily by default, configurable to weekly/monthly via SALT_ROTATION) at the edge. Raw IP is discarded immediately — the hash cannot be linked across salt periods, preserving anonymity while keeping 30-day visitor counts honest.',
+      a: 'Analytics hashes the client IP, User-Agent and a secret daily salt at the Cloudflare edge. The raw IP is discarded immediately — the hash cannot be linked across days, preserving user anonymity while keeping daily visitor metrics honest.',
     },
     {
       q: 'Will the tracker slow down my website?',
-      a: 'Not at all. The tracker is 1.15 KB gzipped (≤1.5 KB budget, 45× smaller than GA4, 0 dependencies). It loads asynchronously with defer and uses sendBeacon → fetch keepalive, so it never blocks rendering.',
+      a: 'Not at all. The tracker is 1.15 KB gzipped (≤1.5 KB budget, 45× smaller than GA4, 0 dependencies). It loads asynchronously with defer and uses non-blocking sendBeacon requests, maintaining 100% Google Lighthouse scores.',
     },
     {
-      q: 'Can I track single-page apps (Next.js, React, Vue, SvelteKit)?',
+      q: 'Can I track single-page apps (Next.js, React, Vue, SvelteKit, Astro)?',
       a: 'Yes. The tracker automatically intercepts window history (pushState and replaceState) to track pageviews seamlessly on client-side route transitions with zero extra configuration.',
     },
     {
-      q: 'Can I share my analytics publicly?',
+      q: 'Can I share my analytics publicly with clients or investors?',
       a: 'Yes! Every website comes with an optional public share link (/s/[share_token]) that lets you showcase your live traffic metrics without requiring viewers to sign in or create an account.',
     },
   ];
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col justify-between">
-      {/* Dynamic Nav */}
-      <NavBar isScrolled={isScrolled}>
-        <Link href="/" className="flex items-center gap-2 font-display text-[20px] font-medium tracking-tight">
-          <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>analytics</span>
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-8 font-display text-[15px]">
-          <NavLink href="#features" onDark={!isScrolled}>Features</NavLink>
-          <NavLink href="#architecture" onDark={!isScrolled}>Architecture</NavLink>
-          <NavLink href="/pricing" onDark={!isScrolled}>Pricing</NavLink>
-          <NavLink href="/docs" onDark={!isScrolled}>Documentation</NavLink>
-          <NavLink href="/design" onDark={!isScrolled}>Design System</NavLink>
-        </nav>
-
-        <div className="flex items-center gap-4">
-          <Link href="/login">
-            <span className={`font-display text-[14px] font-medium transition-colors ${isScrolled ? 'text-black hover:text-black/70' : 'text-white hover:text-white/80'}`}>
-              Sign in
-            </span>
-          </Link>
-          <Link href="/login">
-            <button className="h-9 px-4 rounded-[4px] font-mono text-[12px] uppercase font-medium bg-[#c8f6f9] text-black hover:bg-[#b0f0f4] transition-colors cursor-pointer">
-              GET STARTED
-            </button>
-          </Link>
-        </div>
-      </NavBar>
+      {/* Responsive Site Header with Mobile Hamburger Menu */}
+      <SiteHeader />
 
       {/* Hero Band Dark */}
       <HeroBandDark>
@@ -184,36 +139,29 @@ window.analytics.track('checkout_completed', {
                   PRIVACY-FIRST ANALYTICS • ZERO COOKIES
                 </span>
               </div>
-              <a
-                href="https://github.com/umami-software/umami"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 bg-white text-black px-3 py-1 rounded-[4px] font-mono text-[11px] font-medium hover:bg-[#f0f0f0] transition-colors"
-                title="Umami GitHub — inspiration, not a fork"
-              >
-                <span>★</span>
-                <span>{githubStars ? `${githubStars} stars` : 'GitHub stars'}</span>
-                <span className="text-[#71717a] hidden sm:inline">· Umami-inspired</span>
-              </a>
+              <div className="inline-flex items-center gap-1.5 bg-white text-black px-3 py-1 rounded-[4px] font-mono text-[11px] font-medium">
+                <Sparkles className="w-3 h-3 text-[#fc4c02]" />
+                <span>1.15 KB TRACKER • 100% GDPR EXEMPT</span>
+              </div>
             </div>
 
             <h1 className="font-display text-[44px] sm:text-[56px] lg:text-[64px] font-medium leading-[1.08] tracking-[-1.92px] text-white mb-6">
-              Simple privacy-first analytics.
+              Simple privacy-first website analytics.
             </h1>
 
             <p className="font-display text-[18px] md:text-[20px] leading-[28px] text-[#999999] max-w-xl mb-8">
-              No cookies. No fingerprint theatre. A lightweight dashboard you actually enjoy opening. Built for $0 operational cost.
+              No cookies. No fingerprint theatre. A lightweight, instant dashboard you actually enjoy opening. Built with Supabase Postgres and Cloudflare Workers edge ingest.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
               <Link href="/login">
                 <ButtonSecondaryMint>
-                  GET STARTED FREE
+                  GET STARTED FREE ($0)
                 </ButtonSecondaryMint>
               </Link>
-              <Link href="/docs">
+              <Link href="/alternatives">
                 <ButtonSecondaryWhite>
-                  VIEW DOCUMENTATION
+                  COMPARE ALTERNATIVES
                 </ButtonSecondaryWhite>
               </Link>
             </div>
@@ -251,20 +199,35 @@ window.analytics.track('checkout_completed', {
         </div>
       </HeroBandDark>
 
+      {/* Answer Block for AEO & Quick Verdict */}
+      <div className="max-w-[1280px] mx-auto px-4 md:px-8 w-full pt-8">
+        <AnswerBlock
+          title="What is Analytics by Sufyaan Studio?"
+          directAnswer="Analytics by Sufyaan Studio is a best-in-class, privacy-first web analytics platform that delivers real-time traffic intelligence, custom conversion tracking, and automatic UTM marketing attribution with a 1.15 KB tracker and 100% cookie-free GDPR compliance."
+          keyTakeaways={[
+            '100% Cookie-free with zero cookie consent popups required',
+            'Sub-1.5 KB tracking script (45x lighter than GA4)',
+            'Instant Cloudflare edge ingestion with live 5-second polling',
+            'PostgreSQL data ownership on Supabase with strict Row Level Security',
+          ]}
+        />
+      </div>
+
       {/* "Works with" grayscale logo bar */}
-      <div className="w-full border-b border-[#ebebeb] bg-[#fafafa] py-8">
+      <div className="w-full border-y border-[#ebebeb] bg-[#fafafa] py-8 my-8">
         <div className="max-w-[1280px] mx-auto px-4 md:px-8">
           <p className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#999999] text-center mb-6">
             WORKS SEAMLESSLY WITH EVERY MODERN WEB FRAMEWORK
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-70">
-            <span className="font-display font-medium text-[16px] text-[#71717a]">Next.js</span>
-            <span className="font-display font-medium text-[16px] text-[#71717a]">WordPress</span>
-            <span className="font-display font-medium text-[16px] text-[#71717a]">HTML5 / Vanilla</span>
-            <span className="font-display font-medium text-[16px] text-[#71717a]">Vite / React</span>
-            <span className="font-display font-medium text-[16px] text-[#71717a]">Astro</span>
-            <span className="font-display font-medium text-[16px] text-[#71717a]">SvelteKit</span>
-            <span className="font-display font-medium text-[16px] text-[#71717a]">Remix / Vue</span>
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 opacity-80">
+            <Link href="/integrations/nextjs" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">Next.js</Link>
+            <Link href="/integrations/react" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">React & Vite</Link>
+            <Link href="/integrations/astro" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">Astro</Link>
+            <Link href="/integrations/sveltekit" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">SvelteKit</Link>
+            <Link href="/integrations/remix" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">Remix & Vue</Link>
+            <Link href="/integrations/wordpress" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">WordPress</Link>
+            <Link href="/integrations/webflow" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">Webflow</Link>
+            <Link href="/integrations/shopify" className="font-display font-medium text-[15px] text-[#71717a] hover:text-black transition-colors">Shopify</Link>
           </div>
         </div>
       </div>
@@ -502,6 +465,28 @@ window.analytics.track('checkout_completed', {
           <h2 className="font-display text-[36px] font-medium tracking-[-0.8px] text-black">
             How Analytics compares
           </h2>
+          <p className="font-display text-[15px] text-[#71717a] mt-2">
+            See why developers and founders are switching from legacy analytics tools.
+          </p>
+        </div>
+
+        {/* Competitor quick-links bar */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+          <Link href="/alternatives/ga4" className="px-3.5 py-1.5 bg-[#fafafa] border border-[#ebebeb] hover:border-black rounded-[4px] font-mono text-[11px] uppercase transition-colors">
+            vs Google Analytics 4 →
+          </Link>
+          <Link href="/alternatives/plausible" className="px-3.5 py-1.5 bg-[#fafafa] border border-[#ebebeb] hover:border-black rounded-[4px] font-mono text-[11px] uppercase transition-colors">
+            vs Plausible →
+          </Link>
+          <Link href="/alternatives/fathom" className="px-3.5 py-1.5 bg-[#fafafa] border border-[#ebebeb] hover:border-black rounded-[4px] font-mono text-[11px] uppercase transition-colors">
+            vs Fathom →
+          </Link>
+          <Link href="/alternatives/umami" className="px-3.5 py-1.5 bg-[#fafafa] border border-[#ebebeb] hover:border-black rounded-[4px] font-mono text-[11px] uppercase transition-colors">
+            vs Umami →
+          </Link>
+          <Link href="/alternatives" className="px-3.5 py-1.5 bg-black text-white rounded-[4px] font-mono text-[11px] uppercase transition-colors hover:bg-[#26263a]">
+            View All 8 Comparisons →
+          </Link>
         </div>
 
         <div className="border border-[#ebebeb] rounded-[4px] overflow-x-auto mb-20">

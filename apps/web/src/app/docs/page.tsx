@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  NavBar,
-  NavLink,
   ButtonPrimary,
   ButtonSecondaryWhite,
   CodeEditorMockup,
@@ -12,6 +10,8 @@ import {
   FooterWordmarkBanner,
   TextInput,
 } from '@analytics/ui';
+import { SiteHeader } from '@/components/navigation/SiteHeader';
+import { AnswerBlock } from '@/components/seo/AnswerBlock';
 import {
   Code,
   Zap,
@@ -286,40 +286,14 @@ window.analytics.track('${docEventName}', {
 
   return (
     <div className="min-h-screen bg-white flex flex-col justify-between">
-      {/* Top Navbar */}
-      <NavBar>
-        <Link href="/" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight">
-          <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
-          <span>analytics</span>
-        </Link>
-
-        <div className="hidden md:flex items-center gap-8">
-          <NavLink href="/" onDark>Overview</NavLink>
-          <NavLink href="/pricing" onDark>Pricing</NavLink>
-          <NavLink href="/docs" active onDark>Documentation</NavLink>
-          <NavLink href="/design" onDark>Design System</NavLink>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link href="/login">
-            <ButtonSecondaryWhite className="text-[12px] h-9 px-4">
-              SIGN IN
-            </ButtonSecondaryWhite>
-          </Link>
-          <Link href="/login">
-            <ButtonPrimary className="bg-[#c8f6f9] text-black hover:bg-[#b0f0f4] text-[12px] h-9 px-4">
-              GET STARTED
-            </ButtonPrimary>
-          </Link>
-        </div>
-      </NavBar>
+      <SiteHeader forceDark={true} />
 
       {/* Hero Section */}
       <section className="bg-[#010120] text-white py-16 md:py-20 border-b border-[#26263a]">
         <div className="max-w-[1280px] mx-auto px-4 md:px-8">
           <div className="max-w-3xl">
             <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#bdbbff] block mb-3">
-              DEVELOPER DOCUMENTATION & GUIDES
+              DEVELOPER DOCUMENTATION & API REFERENCE
             </span>
             <h1 className="font-display text-[38px] md:text-[52px] font-medium tracking-[-1px] text-white mb-4">
               Integration & Event API Reference
@@ -333,6 +307,19 @@ window.analytics.track('${docEventName}', {
 
       {/* Main Content Area */}
       <main className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 w-full flex-1">
+        <div className="mb-8">
+          <AnswerBlock
+            title="Developer Documentation Summary"
+            directAnswer="Analytics by Sufyaan Studio provides an ultra-lightweight (1.15 KB gzipped), cookie-free JavaScript client and REST API. Install via a single script tag with defer for automatic SPA pageview capture, or use window.analytics.track() for custom conversion events."
+            keyTakeaways={[
+              'Universal script tag installation in under 2 minutes',
+              'Automatic SPA history pushState/replaceState tracking',
+              'Full custom event properties API (2 KB JSON payload capacity)',
+              'Automatic UTM marketing source and ad click ID attribution',
+            ]}
+          />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Left Sticky Table of Contents */}
           <aside className="lg:col-span-3">
