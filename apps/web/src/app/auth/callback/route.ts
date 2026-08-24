@@ -18,6 +18,7 @@ export async function GET(request: Request) {
 
       // Capture the login server-side, linked to the same distinct_id the
       // client uses in posthog.identify() so backend + frontend events join.
+      // Flush before redirect — Workers/Lambdas freeze immediately after response.
       const posthog = getServerPostHog();
       if (posthog && user) {
         posthog.identify({
@@ -28,6 +29,8 @@ export async function GET(request: Request) {
           distinctId: user.id,
           event: 'user_logged_in',
         });
+        // Ensure event is sent before redirect (short-lived handler)
+        await posthog.flush();
       }
 
       const forwardedHost = request.headers.get('x-forwarded-host');

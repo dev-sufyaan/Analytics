@@ -15,7 +15,7 @@ let client: PostHog | null = null;
 
 export function getServerPostHog(): PostHog | null {
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 
   if (!key || !host) {
     return null;
@@ -33,11 +33,20 @@ export function getServerPostHog(): PostHog | null {
   return client;
 }
 
-// Call once at process shutdown (e.g. in a long-running server's exit hook).
-// Per-request handlers should NOT call this — reuse the singleton so events
-// from every request keep flushing through the same client.
+// Flush synchronously — use in short-lived handlers (Route Handlers, Server Actions)
+// to guarantee delivery before the Worker / Lambda freezes. Prefer `flush()` over
+// `shutdown()` per-request so the singleton stays reusable for the next request.
+export async function flushPostHog(): Promise<void> {
+  if (client) {
+    await client.flush();
+  }
+}
+
+// Call shutdown only on process exit (long-running server). Per-request handlers
+// should call `flushPostHog()` instead — shutdown tears down the singleton.
 export async function shutdownPostHog(): Promise<void> {
   if (client) {
     await client.shutdown();
+    client = null;
   }
 }

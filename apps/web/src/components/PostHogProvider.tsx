@@ -1,5 +1,6 @@
 'use client';
 
+import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { posthog } from '@/instrumentation-client';
 import { PostHogPageView } from './PostHogPageView';
 
@@ -9,9 +10,9 @@ export { posthog };
 
 export default function PostHogProvider({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <PHProvider client={posthog}>
       <PostHogPageView />
       {children}
-    </>
+    </PHProvider>
   );
 }

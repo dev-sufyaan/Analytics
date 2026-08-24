@@ -105,7 +105,10 @@ export const config = {
      * - favicon.ico (favicon file)
      * - t.js (tracker script)
      * - c (collect endpoint)
+     * - ingest (PostHog proxy → us.i.posthog.com)
+     * NOTE: PostHog proxy must be excluded or matcher will intercept /ingest/e
+     * and break ingestion (see https://posthog.com/docs/advanced/proxy/nextjs)
      */
-    '/((?!_next/static|_next/image|favicon.ico|t.js|c|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|t.js|c|ingest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
