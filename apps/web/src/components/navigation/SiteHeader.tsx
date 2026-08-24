@@ -79,9 +79,9 @@ export function SiteHeader({ forceDark = false, forceLight = false }: SiteHeader
         {/* Brand Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 font-display text-[20px] font-medium tracking-tight"
+          className="flex items-center gap-2.5 font-display text-[20px] font-medium tracking-tight"
         >
-          <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full shrink-0" />
+          <img src="/logo.png" alt="Analytics by Sufyaan Studio Logo" className="w-6 h-6 rounded-[4px] object-contain shrink-0" />
           <span className={isDark ? 'text-white' : 'text-black'}>analytics</span>
         </Link>
 

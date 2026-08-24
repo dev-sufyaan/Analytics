@@ -140,8 +140,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#010120] flex flex-col justify-between">
       {/* Top Header */}
       <header className="p-6 md:p-8 max-w-[1280px] w-full mx-auto flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-white font-display text-[20px] font-medium tracking-tight">
-          <span className="w-2.5 h-2.5 bg-[#c8f6f9] rounded-full" />
+        <Link href="/" className="flex items-center gap-2.5 text-white font-display text-[20px] font-medium tracking-tight">
+          <img src="/logo.png" alt="Analytics by Sufyaan Studio Logo" className="w-6 h-6 rounded-[4px] object-contain shrink-0" />
           <span>analytics</span>
         </Link>
         <Link

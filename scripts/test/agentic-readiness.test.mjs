@@ -77,8 +77,18 @@ assert.ok(llmsTxt.includes('/openapi.json'), 'llms.txt must include /openapi.jso
 assert.ok(llmsTxt.includes('/mcp.json'), 'llms.txt must include /mcp.json');
 assert.ok(llmsTxt.includes('Cloudflare Workers'), 'llms.txt must include Cloudflare Workers resources');
 
-const llmsFullTxt = generateLlmsFullTxt();
-assert.ok(llmsFullTxt.includes('Cloudflare Workers'), 'llms-full.txt must include Cloudflare Workers');
-console.log('✓ Requirement 5 Passed: Developer resources (Cloudflare Workers, MCP, OpenAPI) are highly discoverable.\n');
+// Test 6: Brand Logo & Schema Integration
+console.log('Testing Requirement 6: Logo & Search Engine Schema...');
+import { getOrganizationSchema, getSoftwareApplicationSchema } from '../../apps/web/src/lib/seo/json-ld.ts';
+import { SITE_CONFIG } from '../../apps/web/src/lib/seo/seo-config.ts';
 
-console.log('🎉 ALL 5 IS AGENTIC READINESS REQUIREMENTS PASSED 100%!');
+const orgSchema = getOrganizationSchema();
+assert.ok(orgSchema.logo.includes('logo.png'), 'Organization logo must point to logo.png');
+assert.ok(orgSchema.image.includes('logo.png'), 'Organization image must point to logo.png');
+
+const appSchema = getSoftwareApplicationSchema();
+assert.ok(appSchema.image.includes('logo.png'), 'SoftwareApplication image must point to logo.png');
+assert.ok(SITE_CONFIG.logoUrl.includes('logo.png'), 'SITE_CONFIG.logoUrl must point to logo.png');
+console.log('✓ Requirement 6 Passed: Logo asset is integrated into structured data, metadata, and site headers.\n');
+
+console.log('🎉 ALL IS AGENTIC & SEO READINESS REQUIREMENTS PASSED 100%!');

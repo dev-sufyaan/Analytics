@@ -6,7 +6,8 @@ export function getOrganizationSchema() {
     '@type': 'Organization',
     name: SITE_CONFIG.name,
     url: SITE_CONFIG.baseUrl,
-    logo: `${SITE_CONFIG.baseUrl}/opengraph-image`,
+    logo: `${SITE_CONFIG.baseUrl}/logo.png`,
+    image: `${SITE_CONFIG.baseUrl}/logo.png`,
     description: SITE_CONFIG.entityStatement,
     sameAs: [
       SITE_CONFIG.socialHandles.github,
@@ -28,6 +29,7 @@ export function getWebSiteSchema() {
       '@type': 'Organization',
       name: SITE_CONFIG.name,
       url: SITE_CONFIG.baseUrl,
+      logo: `${SITE_CONFIG.baseUrl}/logo.png`,
     },
   };
 }
@@ -39,6 +41,8 @@ export function getSoftwareApplicationSchema() {
     name: SITE_CONFIG.name,
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'All',
+    image: `${SITE_CONFIG.baseUrl}/logo.png`,
+    screenshot: `${SITE_CONFIG.baseUrl}/opengraph-image`,
     description: SITE_CONFIG.entityStatement,
     offers: [
       {

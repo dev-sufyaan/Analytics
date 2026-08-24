@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     alternateLocale: ['en_GB', 'en_CA', 'en_AU', 'en_IN', 'en_IE', 'en_NZ', 'en_SG', 'de_DE', 'fr_FR'],
     images: [
       {
-        url: `${SITE_CONFIG.baseUrl}/opengraph-image`,
+        url: `${SITE_CONFIG.baseUrl}/logo.png`,
         width: 1200,
         height: 630,
         alt: SITE_CONFIG.defaultTitle,
@@ -53,7 +53,18 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: SITE_CONFIG.defaultTitle,
     description: SITE_CONFIG.defaultDescription,
-    images: [`${SITE_CONFIG.baseUrl}/opengraph-image`],
+    images: [`${SITE_CONFIG.baseUrl}/logo.png`],
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   robots: {
     index: true,
