@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "analytics",
+  "account_id": "e6544ce571128ed8fa400651fa2d3e8c",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
