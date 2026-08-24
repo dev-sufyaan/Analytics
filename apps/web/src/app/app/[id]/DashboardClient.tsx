@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
 import { getCollectOrigin } from '@/lib/collect-url';
+import { posthog } from '@/components/PostHogProvider';
 
 // Shared SWR store (packages/db/src/overview-store.ts) — the same 30s cache
 // powers every breakdown sub-page, so Overview → Pages costs zero requests.
@@ -144,15 +145,16 @@ export default function DashboardClient({ website }: { website: Website }) {
     };
   }, [autoRefresh, fetchDashboard]);
 
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
     if (website.is_public && website.share_token) {
       const shareUrl = `${window.location.origin}/s/${website.share_token}`;
-      navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(shareUrl);
+      posthog.capture('dashboard_shared', { website_id: website.id });
       setToastMsg('Public share link copied to clipboard!');
     } else {
       setToastMsg('Enable public dashboard in Settings to share.');
     }
-  }, [website.is_public, website.share_token]);
+  }, [website.id, website.is_public, website.share_token]);
 
   const handleExportCSV = useCallback(() => {
     if (!overview) return;
@@ -176,8 +178,9 @@ export default function DashboardClient({ website }: { website: Website }) {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    posthog.capture('dashboard_exported', { website_id: website.id, export_scope: 'dashboard' });
     setToastMsg('CSV export downloaded!');
-  }, [overview, filter, range, website.domain]);
+  }, [overview, filter, range, website.domain, website.id]);
 
   const handleExportTable = useCallback(
     (name: string, rows: string[]) => {
@@ -190,9 +193,10 @@ export default function DashboardClient({ website }: { website: Website }) {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      posthog.capture('dashboard_exported', { website_id: website.id, export_scope: name });
       setToastMsg(`${name} CSV downloaded`);
     },
-    [range, website.domain],
+    [range, website.domain, website.id],
   );
 
   const handleCopyAiPrompt = useCallback(async () => {

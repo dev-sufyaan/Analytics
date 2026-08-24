@@ -17,7 +17,7 @@ export function generateStaticParams() {
   return Object.keys(COMPETITORS_DATA).map((competitor) => ({ competitor }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ competitor: string }> }) {
   const { competitor } = await params;

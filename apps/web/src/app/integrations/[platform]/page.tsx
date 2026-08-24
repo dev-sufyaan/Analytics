@@ -16,7 +16,7 @@ export function generateStaticParams() {
   return Object.keys(INTEGRATIONS_DATA).map((platform) => ({ platform }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ platform: string }> }) {
   const { platform } = await params;

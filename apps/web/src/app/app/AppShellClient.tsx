@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { createBrowserClient } from '@analytics/db/client';
 import { Website } from '@analytics/db/types';
+import { posthog } from '@/components/PostHogProvider';
 import {
   AppSidebar,
   AppSidebarRow,
@@ -26,10 +27,12 @@ import {
 } from 'lucide-react';
 
 export default function AppShellClient({
+  userId,
   userEmail,
   websites,
   children,
 }: {
+  userId: string;
   userEmail: string;
   websites: Website[];
   children: React.ReactNode;
@@ -59,12 +62,17 @@ export default function AppShellClient({
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    posthog.identify(userId, { email: userEmail });
+  }, [userId, userEmail]);
+
   // Extract current website ID from URL if inside /app/[id]/*
   const currentWebsiteId = (params?.id as string) || (websites.length > 0 ? websites[0].id : null);
   const currentSite = websites.find((w) => w.id === currentWebsiteId) || websites[0];
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    posthog.reset();
     router.push('/login');
     router.refresh();
   };

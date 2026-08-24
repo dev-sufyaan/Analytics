@@ -14,6 +14,7 @@ import {
 import { Sparkles, Copy, Check } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
 import { getCollectOrigin } from '@/lib/collect-url';
+import { posthog } from '@/components/PostHogProvider';
 
 export default function NewSitePage() {
   const router = useRouter();
@@ -65,6 +66,7 @@ export default function NewSitePage() {
         .single();
 
       if (error) throw error;
+      posthog.capture('website_created', { website_id: data.id });
       setCreatedSite(data);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to create website');
@@ -89,11 +91,14 @@ export default function NewSitePage() {
         l: 'en-US',
       };
 
-      await fetch('/c', {
+      const response = await fetch('/c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      }).catch(() => {});
+      });
+      if (response.ok) {
+        posthog.capture('test_event_sent', { website_id: createdSite.id });
+      }
     } catch (e) {
       console.error(e);
     }

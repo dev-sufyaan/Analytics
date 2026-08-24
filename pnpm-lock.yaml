@@ -53,6 +53,12 @@ importers:
       next:
         specifier: ^15.2.0
         version: 15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      posthog-js:
+        specifier: ^1.418.10
+        version: 1.418.10
+      posthog-node:
+        specifier: ^5.50.0
+        version: 5.50.0
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -1376,6 +1382,15 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
+  '@posthog/browser-common@0.5.0':
+    resolution: {integrity: sha512-8DaxVZS1bQPbA514RePurLNbYjei3P4jhnC206DwVv5XThmZM3QdlsXenI2ujE3pLbgQ79hYn9o1Kda8I3WK/Q==}
+
+  '@posthog/core@1.48.8':
+    resolution: {integrity: sha512-LAOBOjMQrQmgcbZxnubl74l2GQd5OWqxCJJ8mzcWdZRWbfO6Y/A6E3fqWjDtm68hY4LxC/bbopG60cxZW8cfWw==}
+
+  '@posthog/types@1.405.1':
+    resolution: {integrity: sha512-JvaR4ChUKUk7qSTG58vKN2Br6es9riFF5mvlu7YGcwbB476vfyTO0o/TBh+zE88QhsfxnE5Tr/jKxI+e1v3Q5A==}
+
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
     engines: {node: '>=18'}
@@ -1595,6 +1610,9 @@ packages:
   '@types/react@19.2.18':
     resolution: {integrity: sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w==}
 
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -1787,6 +1805,9 @@ packages:
     resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
     engines: {node: '>=18'}
 
+  core-js@3.50.0:
+    resolution: {integrity: sha512-BRWgOLKkFeCgRudR6zrs8p9XJZcE14grzKMMssoYrk6krtuEZ7MTKPIY5RzOnqsEKIR9kst7wNzphttraT+Yqw==}
+
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -1825,6 +1846,9 @@ packages:
 
   dlv@1.1.3:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
+
+  dompurify@3.4.14:
+    resolution: {integrity: sha512-dVoH9z+MY+C9IilgGCk3YfFqjLi3fChm2OiKJMzh6axrJ5qwxqWaZamgmHrpv22CN/KdbZJuGEGgfQoL00LTdg==}
 
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
@@ -1935,6 +1959,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.4.9:
+    resolution: {integrity: sha512-zdxgIEddhfsyCaWpJ2SdXEP8ZMrKJ6+5jl4OupODcywU0IhRk6gdXuVGcPICyfx2H97hVK7xmJtRLPjkxAX8Vw==}
 
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
@@ -2402,6 +2429,26 @@ packages:
     resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
     engines: {node: '>=12'}
 
+  posthog-js@1.418.10:
+    resolution: {integrity: sha512-XMvmmnuFoesSPjFo+wvzXkvuzYqIho8CVqxugG1Wt768offFARYNZDd1/xWfm9vk/pJTJ4RhUEHRzLpggmGx9Q==}
+
+  posthog-node@5.50.0:
+    resolution: {integrity: sha512-7trcTN4EcPBiYAI1nnD1rk+VB+OcjgN0Mdnp7kOK09PTCSW0LCAUVAYj3FD7u8Ne5zYCnW/ESv6k3VU7sOsL5w==}
+    engines: {node: ^20.20.0 || >=22.22.0}
+    peerDependencies:
+      rxjs: ^7.0.0
+    peerDependenciesMeta:
+      rxjs:
+        optional: true
+
+  preact@10.29.8:
+    resolution: {integrity: sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==}
+    peerDependencies:
+      preact-render-to-string: '>=5'
+    peerDependenciesMeta:
+      preact-render-to-string:
+        optional: true
+
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
@@ -2409,6 +2456,9 @@ packages:
   qs@6.15.3:
     resolution: {integrity: sha512-O9gl3zCl5h5blw1KGUzQKhA5oUXSl8rwUIM5o0S3nCXMliSvy5Dzx7/DJcI+SwgICv+IneSZwhBh1oSyEHA71A==}
     engines: {node: '>=0.6'}
+
+  query-selector-shadow-dom@1.0.1:
+    resolution: {integrity: sha512-lT5yCqEBgfoMYpf3F2xQRK7zEr1rhIIZuceDK6+xRkJQ4NMbHTwXqk4NkwDwQMNqXgG9r9fyHnzwNVs6zV5KRw==}
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -2667,6 +2717,12 @@ packages:
   web-streams-polyfill@4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
     engines: {node: '>= 14'}
+
+  web-vitals@5.3.0:
+    resolution: {integrity: sha512-q6LWsLatGYZp5VGBIOvbTj6JBV2nOmC8KvWztXBmwJcfFAzhwKwbOxhUH306XY3CcaZDUlSmSuNPBsCn0bFu+g==}
+
+  web-vitals@6.0.0:
+    resolution: {integrity: sha512-Guaibvy/+uNtL6Bsu4jmMJGzuSl91oeRH5iO9pPRbYftnFUr3yqT1TUNX/OE4o9HexuEMU3Kb/Wg7iKhlffZUA==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -3937,6 +3993,17 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
+  '@posthog/browser-common@0.5.0':
+    dependencies:
+      '@posthog/core': 1.48.8
+      '@posthog/types': 1.405.1
+
+  '@posthog/core@1.48.8':
+    dependencies:
+      '@posthog/types': 1.405.1
+
+  '@posthog/types@1.405.1': {}
+
   '@sindresorhus/is@7.2.0': {}
 
   '@smithy/config-resolver@4.7.2':
@@ -4198,6 +4265,9 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
+  '@types/trusted-types@2.0.7':
+    optional: true
+
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
@@ -4374,6 +4444,8 @@ snapshots:
 
   cookie@1.1.1: {}
 
+  core-js@3.50.0: {}
+
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -4399,6 +4471,10 @@ snapshots:
   didyoumean@1.2.2: {}
 
   dlv@1.1.3: {}
+
+  dompurify@3.4.14:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
 
   dotenv@16.6.1: {}
 
@@ -4603,6 +4679,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
       picomatch: 4.0.5
+
+  fflate@0.4.9: {}
 
   fill-range@7.1.1:
     dependencies:
@@ -4998,6 +5076,27 @@ snapshots:
 
   postgres@3.4.9: {}
 
+  posthog-js@1.418.10:
+    dependencies:
+      '@posthog/browser-common': 0.5.0
+      '@posthog/core': 1.48.8
+      '@posthog/types': 1.405.1
+      core-js: 3.50.0
+      dompurify: 3.4.14
+      fflate: 0.4.9
+      preact: 10.29.8
+      query-selector-shadow-dom: 1.0.1
+      web-vitals: 5.3.0
+      web-vitals-soft-navs: web-vitals@6.0.0
+    transitivePeerDependencies:
+      - preact-render-to-string
+
+  posthog-node@5.50.0:
+    dependencies:
+      '@posthog/core': 1.48.8
+
+  preact@10.29.8: {}
+
   proxy-addr@2.0.7:
     dependencies:
       forwarded: 0.2.0
@@ -5007,6 +5106,8 @@ snapshots:
     dependencies:
       es-define-property: 1.0.1
       side-channel: 1.1.1
+
+  query-selector-shadow-dom@1.0.1: {}
 
   queue-microtask@1.2.3: {}
 
@@ -5342,6 +5443,10 @@ snapshots:
   vary@1.1.2: {}
 
   web-streams-polyfill@4.0.0-beta.3: {}
+
+  web-vitals@5.3.0: {}
+
+  web-vitals@6.0.0: {}
 
   webidl-conversions@3.0.1: {}
 

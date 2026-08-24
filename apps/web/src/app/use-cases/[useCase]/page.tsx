@@ -16,7 +16,7 @@ export function generateStaticParams() {
   return Object.keys(USE_CASES_DATA).map((useCase) => ({ useCase }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ useCase: string }> }) {
   const { useCase } = await params;

@@ -3,7 +3,7 @@ import CompetitorComparisonPage, {
   generateMetadata as baseGenerateMetadata,
 } from '../../alternatives/[competitor]/page';
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return baseGenerateStaticParams();

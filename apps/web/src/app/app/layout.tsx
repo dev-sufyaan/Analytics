@@ -24,7 +24,7 @@ export default async function AppLayout({
   const websites = await getRscUserWebsites();
 
   return (
-    <AppShellClient userEmail={user.email || ''} websites={websites}>
+    <AppShellClient userId={user.id} userEmail={user.email || ''} websites={websites}>
       {children}
     </AppShellClient>
   );

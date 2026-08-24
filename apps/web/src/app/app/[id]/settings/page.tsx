@@ -19,6 +19,7 @@ import {
 import { Trash2, Copy, ExternalLink, ArrowLeft, AlertCircle, ShieldCheck, Sparkles, Check } from 'lucide-react';
 import { buildAiPrompt } from '@/lib/ai-prompt';
 import { getCollectOrigin } from '@/lib/collect-url';
+import { posthog } from '@/components/PostHogProvider';
 
 export default function SiteSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: websiteId } = use(params);
@@ -82,6 +83,7 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
         })
         .eq('id', websiteId);
       if (error) throw error;
+      posthog.capture('website_settings_updated', { website_id: websiteId });
       setToastMsg('Settings saved successfully');
       fetchSite();
     } catch (e: any) {
@@ -98,6 +100,7 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
     try {
       const { error } = await supabase.from('websites').update({ is_public: checked }).eq('id', websiteId);
       if (error) throw error;
+      posthog.capture('public_dashboard_toggled', { website_id: websiteId, is_public: checked });
       setWebsite((prev) => (prev ? { ...prev, is_public: checked } : prev));
       setToastMsg(checked ? 'Public dashboard enabled.' : 'Public dashboard disabled.');
     } catch (e: any) {
@@ -112,6 +115,7 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
     setWiping(true);
     try {
       await wipeWebsiteData(supabase, websiteId);
+      posthog.capture('analytics_data_wiped', { website_id: websiteId });
       setShowWipeModal(false);
       setToastMsg('Analytics data wiped successfully');
     } catch (e: any) {
@@ -126,6 +130,7 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
     try {
       const { error } = await supabase.from('websites').delete().eq('id', websiteId);
       if (error) throw error;
+      posthog.capture('website_deleted', { website_id: websiteId });
       router.push('/app');
       router.refresh();
     } catch (e: any) {

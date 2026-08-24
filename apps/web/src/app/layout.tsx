@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { SITE_CONFIG } from '@/lib/seo/seo-config';
 import { getOrganizationSchema, getWebSiteSchema, getSoftwareApplicationSchema } from '@/lib/seo/json-ld';
+import PostHogProvider from '@/components/PostHogProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -96,7 +97,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   );

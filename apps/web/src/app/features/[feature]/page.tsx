@@ -16,7 +16,7 @@ export function generateStaticParams() {
   return Object.keys(FEATURES_DATA).map((feature) => ({ feature }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ feature: string }> }) {
   const { feature } = await params;

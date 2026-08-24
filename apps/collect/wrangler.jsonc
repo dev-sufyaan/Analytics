@@ -14,7 +14,8 @@
   },
   "kv_namespaces": [
     {
-      "binding": "SITE_CACHE"
+      "binding": "SITE_CACHE",
+      "id": "6bacb5c306ba4ffdaae42035296a1f64"
     }
   ]
 }
