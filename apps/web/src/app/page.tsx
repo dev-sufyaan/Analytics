@@ -20,6 +20,7 @@ import {
 } from '@analytics/ui';
 import { AnswerBlock } from '@/components/seo/AnswerBlock';
 import { SiteHeader } from '@/components/navigation/SiteHeader';
+import { HeroAnalyticsVisual } from '@/components/hero/HeroAnalyticsVisual';
 import {
   Shield,
   Zap,
@@ -167,34 +168,9 @@ window.analytics.track('checkout_completed', {
             </div>
           </div>
 
-          {/* Right Signature 3-Stop Gradient Ribbon Graphic */}
+          {/* Right Minimal High-Class Analytics Showcase */}
           <div className="lg:col-span-5 flex justify-center">
-            <div className="w-full max-w-[420px] aspect-square relative rounded-[8px] bg-radial from-[#151538] to-transparent p-6 flex items-center justify-center overflow-hidden">
-              <svg viewBox="0 0 400 400" className="w-full h-full drop-shadow-2xl">
-                <defs>
-                  <linearGradient id="heroRibbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#fc4c02" />
-                    <stop offset="50%" stopColor="#ef2cc1" />
-                    <stop offset="100%" stopColor="#bdbbff" />
-                  </linearGradient>
-                  <linearGradient id="heroRibbonGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ef2cc1" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#fc4c02" stopOpacity="0.3" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M 60,200 C 60,100 150,60 220,110 C 290,160 340,120 340,220 C 340,320 250,340 180,290 C 110,240 60,300 60,200 Z"
-                  fill="url(#heroRibbonGrad)"
-                  opacity="0.9"
-                />
-                <path
-                  d="M 100,160 C 120,80 240,80 280,160 C 320,240 200,320 130,260 Z"
-                  fill="url(#heroRibbonGrad2)"
-                />
-                <circle cx="200" cy="200" r="45" fill="#010120" stroke="#26263a" strokeWidth="2" />
-                <circle cx="200" cy="200" r="6" fill="#c8f6f9" />
-              </svg>
-            </div>
+            <HeroAnalyticsVisual />
           </div>
         </div>
       </HeroBandDark>
