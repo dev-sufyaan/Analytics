@@ -1,4 +1,6 @@
 // apps/mobile/src/lib/supabase.ts
+// Polyfills must be imported before any supabase/crypto usage — Hermes on Android lacks URL & getRandomValues
+import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';

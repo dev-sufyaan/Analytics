@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Analytics",
-    "slug": "analytics",
-    "version": "1.0.0",
+  "slug": "analytics",
+  "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "analytics",
@@ -23,7 +23,7 @@
         "backgroundColor": "#010120"
       },
       "package": "com.sufyaanstudio.analytics",
-      "versionCode": 1,
+      "versionCode": 2,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
@@ -36,7 +36,8 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true

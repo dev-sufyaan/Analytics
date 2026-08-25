@@ -1,6 +1,9 @@
 // apps/mobile/app/_layout.tsx
-import React, { useEffect, Component, ErrorInfo } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
+import React, { useEffect, Component, ErrorInfo, useCallback, useState } from 'react';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, focusManager } from '@tanstack/react-query';
@@ -12,6 +15,19 @@ import { useAuth } from '../src/data/hooks';
 import { tokens } from '../src/theme/tokens';
 import { AlertCircle, RefreshCw } from 'lucide-react-native';
 import '../global.css';
+
+// Keep splash visible while JS bundle loads / fonts prepare — SDK 54 requires explicit hide
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Global JS error handler that logs to console and prevents silent blank screen (expo-updates issue #41543)
+if (typeof ErrorUtils !== 'undefined' && (ErrorUtils as any).setGlobalHandler) {
+  const prev = (ErrorUtils as any).getGlobalHandler?.();
+  (ErrorUtils as any).setGlobalHandler((error: Error, isFatal?: boolean) => {
+    console.error('[Global JS Error]', error, { isFatal });
+    // Still call previous handler so expo-updates / Sentry can capture, but also log
+    if (prev) prev(error, isFatal);
+  });
+}
 
 // Defensive web polyfill for Touchable.Mixin to protect any legacy SVG mixins
 if (Platform.OS === 'web') {
@@ -88,8 +104,13 @@ class AppErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
               An unexpected render issue occurred. Your data is safe.
             </Text>
             {this.state.error?.message && (
-              <Text style={errorStyles.errorMessage} numberOfLines={3}>
+              <Text style={errorStyles.errorMessage} numberOfLines={5}>
                 {this.state.error.message}
+              </Text>
+            )}
+            {this.state.error?.stack && (
+              <Text style={errorStyles.stack} numberOfLines={4}>
+                {this.state.error.stack.slice(0, 400)}
               </Text>
             )}
             <TouchableOpacity
@@ -149,6 +170,13 @@ const errorStyles = StyleSheet.create({
     width: '100%',
     textAlign: 'center',
   },
+  stack: {
+    fontSize: 9,
+    color: '#999',
+    width: '100%',
+    textAlign: 'left',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,9 +199,11 @@ function NavigationGuard({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const rootState = useRootNavigationState();
 
   useEffect(() => {
     if (loading) return;
+    if (!rootState?.key) return; // navigation not ready yet — prevents blank redirect before router mounted
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -184,50 +214,96 @@ function NavigationGuard({ children }: { children: React.ReactNode }) {
       // User is signed in and on login screen -> redirect to main tabs
       router.replace('/(tabs)');
     }
-  }, [session, loading, segments, router]);
+  }, [session, loading, segments, router, rootState]);
 
   return <>{children}</>;
 }
 
 export default function RootLayout() {
+  const [appReady, setAppReady] = useState(false);
+  const [persistReady, setPersistReady] = useState(true);
+
+  // Prepare app and hide splash once ready — with timeout fallback for SDK 54 stuck splash issue
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Add any font loading or other async prep here if needed
+        // Ensure at least one frame has rendered before hiding splash
+        await new Promise((res) => setTimeout(res, 100));
+      } finally {
+        setAppReady(true);
+        SplashScreen.hideAsync().catch(() => {});
+      }
+    }
+    prepare();
+    // Fallback: force hide after 3s even if prepare hangs (prevents white stuck splash)
+    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (appReady) {
+      try {
+        await SplashScreen.hideAsync();
+      } catch {}
+    }
+  }, [appReady]);
+
+  if (!appReady) {
+    // Keep splash visible; render nothing yet to let expo-splash-screen control transition
+    return null;
+  }
+
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider onLayout={onLayoutRootView}>
       <AppErrorBoundary>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            persister: asyncStoragePersister,
-            maxAge: CACHE_MAX_AGE,
-            buster: CACHE_BUSTER,
-          }}
-        >
-          <StatusBar style="light" />
-          <OfflineBanner />
-          <NavigationGuard>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: tokens.colors.canvasSubtle },
-                animation: 'fade',
-              }}
-            >
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="site/[panel]"
-                options={{
-                  headerShown: true,
-                  headerStyle: { backgroundColor: tokens.colors.canvasDark },
-                  headerTintColor: '#ffffff',
-                  headerTitleStyle: { fontWeight: '700', fontSize: 15 },
-                  presentation: 'card',
-                  animation: 'slide_from_right',
+        {persistReady ? (
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister: asyncStoragePersister,
+              maxAge: CACHE_MAX_AGE,
+              buster: CACHE_BUSTER,
+            }}
+          >
+            <StatusBar style="light" />
+            <OfflineBanner />
+            <NavigationGuard>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: tokens.colors.canvasSubtle },
+                  animation: 'fade',
                 }}
-              />
-            </Stack>
-          </NavigationGuard>
-        </PersistQueryClientProvider>
+              >
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="site/[panel]"
+                  options={{
+                    headerShown: true,
+                    headerStyle: { backgroundColor: tokens.colors.canvasDark },
+                    headerTintColor: '#ffffff',
+                    headerTitleStyle: { fontWeight: '700', fontSize: 15 },
+                    presentation: 'card',
+                    animation: 'slide_from_right',
+                  }}
+                />
+              </Stack>
+            </NavigationGuard>
+          </PersistQueryClientProvider>
+        ) : (
+          // Lightweight fallback without persistence — ensures app still renders even if AsyncStorage corrupted
+          <View style={{ flex: 1, backgroundColor: tokens.colors.canvasSubtle, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+            <AlertCircle size={28} color={tokens.colors.trendNegative} />
+            <Text style={{ marginTop: 12, fontWeight: '700', color: tokens.colors.ink }}>Recovering storage…</Text>
+            <Text style={{ marginTop: 8, color: tokens.colors.body, textAlign: 'center' }}>Tap to retry login.</Text>
+            <TouchableOpacity onPress={() => setPersistReady(true)} style={{ marginTop: 16, backgroundColor: tokens.colors.ink, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4 }}>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>Reload App</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </AppErrorBoundary>
     </SafeAreaProvider>
   );
