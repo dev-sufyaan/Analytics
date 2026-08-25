@@ -17,5 +17,11 @@
       "binding": "SITE_CACHE",
       "id": "6bacb5c306ba4ffdaae42035296a1f64"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "RELEASES_BUCKET",
+      "bucket_name": "analytics-releases"
+    }
   ]
 }

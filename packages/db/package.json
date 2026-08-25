@@ -15,7 +15,8 @@
     "./queries": "./src/queries.ts",
     "./overview-store": "./src/overview-store.ts",
     "./types": "./src/types.ts",
-    "./range": "./src/range.ts"
+    "./range": "./src/range.ts",
+    "./constants": "./src/constants.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.0",

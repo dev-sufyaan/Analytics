@@ -3,7 +3,11 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter @analytics/mobile dev",
+    "dev:mobile:web": "pnpm --filter @analytics/mobile dev -- --web",
+    "dev:mobile:android": "pnpm --filter @analytics/mobile dev -- --android",
     "dev:collect": "pnpm --filter collect dev",
+    "typecheck:mobile": "pnpm --filter @analytics/mobile typecheck",
     "build": "pnpm --filter @analytics/tracker build && pnpm --filter web build",
     "build:tracker": "pnpm --filter @analytics/tracker build",
     "db:migrate": "node scripts/migrate.mjs",
@@ -22,5 +26,14 @@
     "dotenv": "^16.4.7",
     "postgres": "^3.4.5",
     "typescript": "^5.7.3"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "nativewind": "4.1.23",
+    "react-native-css-interop": "0.2.3",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.4"
   }
 }

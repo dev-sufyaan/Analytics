@@ -1,0 +1,25 @@
+# OSX
+#
+.DS_Store
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+
+# Keystores - release keystore must be provided via CI secret ANDROID_KEYSTORE_BASE64
+*.keystore
+!debug.keystore
+release.keystore
+*.jks
+
+# Bundle artifacts
+*.jsbundle
+
+# Generated manifest (CI generates per-release)
+latest.json

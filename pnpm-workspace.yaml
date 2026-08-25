@@ -6,3 +6,11 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+overrides:
+  "react": "19.1.0"
+  "react-dom": "19.1.0"
+  "react-native": "0.81.5"
+  "nativewind": "4.1.23"
+  "react-native-css-interop": "0.2.3"
+  "@types/react": "^19.1.10"
+  "@types/react-dom": "^19.1.4"

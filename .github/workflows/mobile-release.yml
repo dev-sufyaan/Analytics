@@ -1,0 +1,127 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js & pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.22.0
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Gradle Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Expo Prebuild
+        run: |
+          cd apps/mobile
+          npx expo prebuild --platform android --no-install
+          # Ensure local.properties is set for Gradle (required when ANDROID_HOME not auto-detected)
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          cat android/local.properties
+
+      - name: Configure Keystore & Gradle Signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > apps/mobile/android/app/release.keystore
+            # Patch gradle.properties instead of overwriting — preserves hermesEnabled, newArchEnabled, etc.
+            if grep -q "RELEASE_STORE_FILE" apps/mobile/android/gradle.properties; then
+              sed -i "s|^RELEASE_STORE_FILE=.*|RELEASE_STORE_FILE=release.keystore|" apps/mobile/android/gradle.properties
+              sed -i "s|^RELEASE_STORE_PASSWORD=.*|RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD|" apps/mobile/android/gradle.properties
+              sed -i "s|^RELEASE_KEY_ALIAS=.*|RELEASE_KEY_ALIAS=$KEY_ALIAS|" apps/mobile/android/gradle.properties
+              sed -i "s|^RELEASE_KEY_PASSWORD=.*|RELEASE_KEY_PASSWORD=$KEY_PASSWORD|" apps/mobile/android/gradle.properties
+            else
+              printf "\nRELEASE_STORE_FILE=release.keystore\nRELEASE_STORE_PASSWORD=%s\nRELEASE_KEY_ALIAS=%s\nRELEASE_KEY_PASSWORD=%s\n" "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" >> apps/mobile/android/gradle.properties
+            fi
+            echo "Keystore configured; gradle.properties patched"
+            cat apps/mobile/android/gradle.properties
+          else
+            echo "No ANDROID_KEYSTORE_BASE64 secret — using local debug fallback keystore (not for production R2 releases)"
+          fi
+
+      - name: Build Release APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          cd apps/mobile/android
+          ./gradlew assembleRelease -PversionCode=$VERSION_CODE
+
+      - name: Compute SHA-256 & Generate Manifest
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          VERSION_CODE=${{ github.run_number }}
+          APK_PATH=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          
+          if [ -z "$APK_PATH" ]; then
+            echo "APK file not found!"
+            exit 1
+          fi
+          
+          SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
+          
+          echo "{\"version\":\"$VERSION\",\"versionCode\":$VERSION_CODE,\"apkUrl\":\"https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk\",\"sha256\":\"$SHA256\"}" > latest.json
+          
+          cp "$APK_PATH" analytics-$VERSION.apk
+          cp "$APK_PATH" analytics-latest.apk
+
+      - name: Upload Manifest to R2
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: r2 object put analytics-releases/latest.json --file=latest.json
+
+      - name: Upload Versioned APK to R2
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: r2 object put analytics-releases/analytics-${{ github.ref_name }}.apk --file=analytics-${{ github.ref_name }}.apk
+
+      - name: Upload Latest APK to R2
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: r2 object put analytics-releases/analytics-latest.apk --file=analytics-latest.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            analytics-*.apk
+            latest.json
