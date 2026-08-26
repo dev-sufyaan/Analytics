@@ -184,53 +184,19 @@ export function DownloadClient() {
                   </span>
                 </div>
 
-                {/* Styled SVG QR Code */}
-                <div className="bg-white p-4 rounded-[6px] shadow-inner inline-block mx-auto">
-                  <svg
-                    className="w-44 h-44 mx-auto"
-                    viewBox="0 0 100 100"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    {/* Top-left locator */}
-                    <rect x="4" y="4" width="28" height="28" rx="2" fill="#010120" />
-                    <rect x="8" y="8" width="20" height="20" rx="1" fill="white" />
-                    <rect x="12" y="12" width="12" height="12" fill="#010120" />
-
-                    {/* Top-right locator */}
-                    <rect x="68" y="4" width="28" height="28" rx="2" fill="#010120" />
-                    <rect x="72" y="8" width="20" height="20" rx="1" fill="white" />
-                    <rect x="76" y="12" width="12" height="12" fill="#010120" />
-
-                    {/* Bottom-left locator */}
-                    <rect x="4" y="68" width="28" height="28" rx="2" fill="#010120" />
-                    <rect x="8" y="72" width="20" height="20" rx="1" fill="white" />
-                    <rect x="12" y="76" width="12" height="12" fill="#010120" />
-
-                    {/* QR Code Matrix Data Blocks */}
-                    <rect x="36" y="8" width="8" height="8" fill="#010120" />
-                    <rect x="48" y="12" width="8" height="8" fill="#010120" />
-                    <rect x="36" y="24" width="8" height="12" fill="#010120" />
-                    <rect x="52" y="28" width="10" height="6" fill="#010120" />
-
-                    <rect x="8" y="38" width="12" height="8" fill="#010120" />
-                    <rect x="24" y="40" width="8" height="16" fill="#010120" />
-                    
-                    {/* Center Brand Accent */}
-                    <rect x="40" y="40" width="20" height="20" rx="4" fill="#010120" />
-                    <circle cx="50" cy="50" r="5" fill="#c8f6f9" />
-
-                    <rect x="66" y="38" width="10" height="8" fill="#010120" />
-                    <rect x="82" y="42" width="10" height="14" fill="#010120" />
-                    <rect x="66" y="54" width="18" height="6" fill="#010120" />
-
-                    <rect x="38" y="68" width="12" height="8" fill="#010120" />
-                    <rect x="56" y="66" width="8" height="12" fill="#010120" />
-                    <rect x="70" y="72" width="14" height="10" fill="#010120" />
-                    <rect x="42" y="82" width="12" height="10" fill="#010120" />
-                    <rect x="60" y="84" width="22" height="8" fill="#010120" />
-                  </svg>
+                {/* Scannable High-Precision QR Code */}
+                <div className="bg-white p-3.5 rounded-[6px] shadow-inner inline-block mx-auto">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/qr-code-direct-download.png"
+                    alt="Scan QR Code to Download Analytics Android APK"
+                    width={176}
+                    height={176}
+                    className="w-44 h-44 mx-auto rounded-[2px] object-contain"
+                  />
                 </div>
+
+
 
                 <p className="font-display text-[13px] text-[#999999] leading-snug">
                   Point your Android camera at the QR code to begin the direct download immediately.

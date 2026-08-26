@@ -285,10 +285,48 @@ export default {
             });
           }
         }
-        // If file not in R2, redirect to download page with 302
+        // Direct GitHub release asset CDN redirect (instant high-speed direct APK download)
+        try {
+          const ghRes = await fetch(
+            'https://api.github.com/repos/dev-sufyaan/Analytics/releases/assets/531151913',
+            {
+              headers: {
+                'User-Agent': 'Analytics-Collect-Worker',
+                Accept: 'application/octet-stream',
+              },
+              redirect: 'manual',
+            }
+          );
+          const location = ghRes.headers.get('location');
+          if (location) {
+            return Response.redirect(location, 302);
+          }
+        } catch {}
         return Response.redirect('https://analytics.sufyaanstudio.workers.dev/download', 302);
       }
     }
+
+    // 3b-ii. Direct /analytics-latest.apk alias on collect worker
+    if (url.pathname === '/analytics-latest.apk') {
+      try {
+        const ghRes = await fetch(
+          'https://api.github.com/repos/dev-sufyaan/Analytics/releases/assets/531151913',
+          {
+            headers: {
+              'User-Agent': 'Analytics-Collect-Worker',
+              Accept: 'application/octet-stream',
+            },
+            redirect: 'manual',
+          }
+        );
+        const location = ghRes.headers.get('location');
+        if (location) {
+          return Response.redirect(location, 302);
+        }
+      } catch {}
+      return Response.redirect('https://analytics.sufyaanstudio.workers.dev/download', 302);
+    }
+
 
     // 3c. Pixel tracking fallback (1x1 transparent GIF)
     if (url.pathname.startsWith('/p/') || url.pathname === '/pixel.gif' || url.pathname === '/p') {
