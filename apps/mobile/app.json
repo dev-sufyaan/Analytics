@@ -2,7 +2,7 @@
   "expo": {
     "name": "Analytics",
   "slug": "analytics",
-  "version": "1.0.2",
+  "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "analytics",
@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.sufyaanstudio.analytics",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",

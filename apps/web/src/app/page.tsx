@@ -36,7 +36,12 @@ import {
   Eye,
   Clock,
   CheckCircle2,
+  Download,
+  QrCode,
+  Radio,
+  FileCheck,
 } from 'lucide-react';
+
 
 export default function MarketingHomePage() {
   const [activeSnippetTab, setActiveSnippetTab] = useState<'nextjs' | 'html' | 'react' | 'event'>('nextjs');
@@ -121,7 +126,16 @@ window.analytics.track('checkout_completed', {
       q: 'Can I share my analytics publicly with clients or investors?',
       a: 'Yes! Every website comes with an optional public share link (/s/[share_token]) that lets you showcase your live traffic metrics without requiring viewers to sign in or create an account.',
     },
+    {
+      q: 'Is there a native mobile app for Android?',
+      a: 'Yes! Our official native Android app (v2.0.0) is available as a direct universal APK download on our website at /download. It features 60fps native charts, sub-50ms cold start, persistent offline caching, biometric Keystore encryption, and an in-app self-updater with zero Google Play store telemetry.',
+    },
+    {
+      q: 'Why is the Android app distributed as a direct APK instead of Google Play?',
+      a: 'We distribute the APK directly to protect user privacy from Google Play telemetry and third-party advertising IDs, eliminate store review delays, and give founders 100% control over their analytics software.',
+    },
   ];
+
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col justify-between">
@@ -134,17 +148,25 @@ window.analytics.track('checkout_completed', {
           {/* Left Headline & CTA */}
           <div className="lg:col-span-7">
             <div className="flex flex-wrap items-center gap-2 mb-6">
+              <Link
+                href="/download"
+                className="inline-flex items-center gap-1.5 bg-[#c8f6f9] text-[#010120] px-3 py-1 rounded-[4px] font-mono text-[11px] font-bold hover:bg-[#b0f0f4] transition-colors"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>NEW: ANDROID APP v2.0 RELEASED →</span>
+              </Link>
               <div className="inline-flex items-center gap-2 bg-[#26263a] px-3 py-1 rounded-[4px]">
                 <LiveDot />
                 <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#bdbbff]">
-                  PRIVACY-FIRST ANALYTICS • ZERO COOKIES
+                  ZERO COOKIES • 100% GDPR
                 </span>
               </div>
               <div className="inline-flex items-center gap-1.5 bg-white text-black px-3 py-1 rounded-[4px] font-mono text-[11px] font-medium">
                 <Sparkles className="w-3 h-3 text-[#fc4c02]" />
-                <span>1.15 KB TRACKER • 100% GDPR EXEMPT</span>
+                <span>1.15 KB SCRIPT</span>
               </div>
             </div>
+
 
             <h1 className="font-display text-[44px] sm:text-[56px] lg:text-[64px] font-medium leading-[1.08] tracking-[-1.92px] text-white mb-6">
               Simple privacy-first website analytics.
@@ -306,8 +328,144 @@ window.analytics.track('checkout_completed', {
         </div>
       </section>
 
+      {/* Android Mobile App Showcase Section */}
+      <section className="py-12 max-w-[1280px] mx-auto px-4 md:px-8 w-full">
+        <div className="bg-[#010120] text-white rounded-[8px] p-8 md:p-12 border border-[#26263a] shadow-2xl relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-1/4 w-80 h-80 bg-gradient-to-br from-[#c8f6f9]/10 to-[#ef2cc1]/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+            {/* Left Column: Mobile App Pitch */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[4px] bg-[#26263a] border border-[#3a3a54]">
+                  <LiveDot />
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#c8f6f9]">
+                    OFFICIAL ANDROID APP AVAILABLE
+                  </span>
+                </div>
+                <span className="px-2.5 py-1 rounded-[4px] bg-white text-black font-mono text-[11px] font-bold">
+                  v2.0.0 APK
+                </span>
+              </div>
+
+              <h2 className="font-display text-[32px] sm:text-[42px] font-medium leading-[1.12] tracking-[-1px] text-white">
+                Your website analytics,{' '}
+                <span className="bg-gradient-to-r from-[#fc4c02] via-[#ef2cc1] to-[#bdbbff] bg-clip-text text-transparent">
+                  native in your pocket.
+                </span>
+              </h2>
+
+              <p className="font-display text-[15px] sm:text-[17px] text-[#999999] leading-relaxed max-w-xl">
+                Check active concurrent visitors, inspect hourly pageview spikes, and receive daily digests wherever you are. Engineered with native 60fps Skia rendering, sub-50ms cold start, and biometric hardware encryption.
+              </p>
+
+              {/* 4 Key Mobile Perks */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-[13px] text-zinc-300">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#10b981] shrink-0" />
+                  <span>Native 60fps Charts</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#10b981] shrink-0" />
+                  <span>Instant Cold Start (&lt; 50ms)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#10b981] shrink-0" />
+                  <span>Hardware Keystore Security</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#10b981] shrink-0" />
+                  <span>In-App APK Self-Updating</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <a
+                  href="/analytics-latest.apk"
+                  download="analytics-latest.apk"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold uppercase rounded-[4px] hover:bg-[#b0f0f4] active:scale-[0.99] transition-all shadow-md cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>DOWNLOAD APK (76.3 MB)</span>
+                </a>
+
+                <Link
+                  href="/download"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-[#151538] text-white border border-[#26263a] font-mono text-[13px] font-medium uppercase rounded-[4px] hover:bg-[#202048] transition-colors"
+                >
+                  <QrCode className="w-4 h-4 text-[#c8f6f9]" />
+                  <span>SCAN QR CODE &amp; GUIDE</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              <p className="font-display text-[12px] text-[#71717a]">
+                Exclusively distributed on our official website · Zero Google Play telemetry or tracking.
+              </p>
+            </div>
+
+            {/* Right Column: Visual Smartphone UI Mockup */}
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="w-full max-w-[320px] bg-[#0c0c1e] rounded-[24px] p-4 border-2 border-[#26263a] shadow-2xl relative">
+                {/* Phone Speaker Notch */}
+                <div className="w-20 h-3 bg-[#1e1e38] rounded-full mx-auto mb-4" />
+
+                {/* Mobile App Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#26263a] mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                    <span className="font-display text-[12px] font-medium text-white">saas-app.dev</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-[#c8f6f9] bg-[#151538] px-2 py-0.5 rounded">
+                    60 FPS
+                  </span>
+                </div>
+
+                {/* Live Visitor Counter Card */}
+                <div className="bg-[#151538] rounded-[8px] p-3.5 border border-[#26263a] mb-3">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[#999999] mb-1">
+                    <span>LIVE CONCURRENT</span>
+                    <span className="text-[#10b981] font-bold">● ACTIVE</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-display text-[26px] font-bold text-white">482</span>
+                    <span className="font-mono text-[11px] text-[#10b981]">+18.4% today</span>
+                  </div>
+                </div>
+
+                {/* Simulated Notification Toast */}
+                <div className="bg-[#1a1a38] border border-[#3a3a5e] rounded-[6px] p-2.5 mb-3 shadow-lg">
+                  <div className="flex items-start gap-2 text-[11px]">
+                    <Sparkles className="w-3.5 h-3.5 text-[#fc4c02] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-display font-medium text-white block">Traffic Milestone Reached</span>
+                      <span className="text-[#999999] text-[10px]">10,000 visitors recorded this month!</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mini Metric Bars */}
+                <div className="space-y-1.5 font-display text-[11px] text-[#999999]">
+                  <div className="flex justify-between p-1.5 bg-[#151538]/60 rounded">
+                    <span>Top Referrer</span>
+                    <span className="text-white font-medium">news.ycombinator.com (42%)</span>
+                  </div>
+                  <div className="flex justify-between p-1.5 bg-[#151538]/60 rounded">
+                    <span>Security</span>
+                    <span className="text-[#c8f6f9] font-mono text-[10px]">Keystore Encrypted</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Mid-Page Key Metric Cards */}
       <section className="py-16 max-w-[1280px] mx-auto px-4 md:px-8 w-full" id="features">
+
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a] block mb-2">
             PERFORMANCE AT SCALE

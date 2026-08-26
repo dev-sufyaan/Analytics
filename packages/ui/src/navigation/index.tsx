@@ -118,12 +118,14 @@ export function Footer({ className }: { className?: string }) {
             </span>
             <ul className="space-y-2.5 font-display text-[14px] text-[#71717a]">
               <li><a href="/" className="hover:text-black transition-colors">Overview</a></li>
+              <li><a href="/download" className="hover:text-black transition-colors font-medium text-black inline-flex items-center gap-1.5">Android App (.apk) <span className="bg-[#c8f6f9] text-[#010120] font-mono text-[9px] px-1 py-0.5 rounded font-bold uppercase">v2.0</span></a></li>
               <li><a href="/features" className="hover:text-black transition-colors">All Features</a></li>
               <li><a href="/pricing" className="hover:text-black transition-colors">Pricing ($0 Free)</a></li>
               <li><a href="/docs" className="hover:text-black transition-colors">Documentation</a></li>
               <li><a href="/privacy-first-analytics" className="hover:text-black transition-colors">Privacy Guide</a></li>
               <li><a href="/design" className="hover:text-black transition-colors">Design System</a></li>
             </ul>
+
           </div>
 
           <div>

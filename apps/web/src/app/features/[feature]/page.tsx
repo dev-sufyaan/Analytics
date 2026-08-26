@@ -165,17 +165,42 @@ export default async function FeatureDetailPage({
         {/* CTA */}
         <div className="my-16 bg-[#010120] text-white rounded-[4px] p-8 md:p-12 text-center border border-[#26263a]">
           <h3 className="font-display text-[28px] md:text-[36px] font-medium tracking-[-0.8px] mb-4">
-            Experience high-performance privacy analytics today.
+            {data.slug === 'android-app'
+              ? 'Download the official Android app today.'
+              : 'Experience high-performance privacy analytics today.'}
           </h3>
           <p className="font-display text-[15px] text-[#999999] max-w-lg mx-auto mb-8">
-            Sign up in 30 seconds. Up to 25,000 events free forever.
+            {data.slug === 'android-app'
+              ? 'Universal signed APK for Android 10 through 15. Zero third-party store telemetry.'
+              : 'Sign up in 30 seconds. Up to 25,000 events free forever.'}
           </p>
-          <Link href="/login">
-            <ButtonSecondaryMint>
-              START FREE NOW
-            </ButtonSecondaryMint>
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {data.slug === 'android-app' ? (
+              <>
+                <a
+                  href="/analytics-latest.apk"
+                  download="analytics-latest.apk"
+                  className="px-6 py-3 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] uppercase font-bold rounded-[4px] hover:bg-[#b0f0f4] transition-colors"
+                >
+                  Download APK (76.3 MB)
+                </a>
+                <Link
+                  href="/download"
+                  className="px-6 py-3 bg-[#151538] text-white border border-[#26263a] font-mono text-[13px] uppercase rounded-[4px] hover:bg-[#202048] transition-colors"
+                >
+                  QR Code &amp; Sideload Guide →
+                </Link>
+              </>
+            ) : (
+              <Link href="/login">
+                <ButtonSecondaryMint>
+                  START FREE NOW
+                </ButtonSecondaryMint>
+              </Link>
+            )}
+          </div>
         </div>
+
 
         <RelatedLinks currentSlug={data.slug} type="feature" />
       </main>

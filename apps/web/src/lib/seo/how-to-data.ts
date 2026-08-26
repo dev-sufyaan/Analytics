@@ -301,4 +301,45 @@ track_event("YOUR_WEBSITE_ID", "api_key_generated", "/settings/api", {"scope": "
       },
     ],
   },
+
+  'how-to-install-analytics-android-apk': {
+    slug: 'how-to-install-analytics-android-apk',
+    title: 'How to Install and Setup the Official Analytics Android App',
+    description: 'A 3-step guide for downloading the official universal APK, verifying the SHA-256 binary integrity, and sideloading on Android 10 through 15.',
+    directAnswer:
+      'To install the official Analytics Android app, download analytics-latest.apk from our official website /download page. When prompted by Android, enable "Allow from this source" in device settings, tap Install, and log in with your email and password. Future updates will install automatically in-place.',
+    readTime: '2 min read',
+    publishedAt: '2026-08-26T00:00:00.000Z',
+    updatedAt: '2026-08-26T00:00:00.000Z',
+    author: 'Sufyaan Studio Engineering',
+    steps: [
+      {
+        name: 'Step 1: Download Official APK from Official Website',
+        text: 'Visit https://analytics.sufyaan.studio/download on your Android device or scan the QR code to save analytics-latest.apk.',
+        language: 'bash',
+        code: `# Optional: Verify binary integrity hash before installation
+sha256sum analytics-latest.apk
+# Verify matches: 1e188e8b993b2507d0d6baa7ee89f68552e301b59a8057a604c585df74f88fe6`,
+      },
+      {
+        name: 'Step 2: Enable "Allow from this source"',
+        text: 'When Android displays the standard sideloading prompt, tap Settings and enable "Allow from this source" for Chrome or your Files app.',
+      },
+      {
+        name: 'Step 3: Complete Installation & Sign In',
+        text: 'Tap Install. Launch the app and authenticate with your email and password. Enjoy 60fps native charts, instant cold start, and biometric security.',
+      },
+    ],
+    faq: [
+      {
+        question: 'Why is the app not distributed on Google Play?',
+        answer: 'Direct APK distribution guarantees zero third-party store telemetry, eliminates mandatory ad tracking, and delivers direct zero-latency in-app updates.',
+      },
+      {
+        question: 'Is sideloading the APK safe?',
+        answer: 'Yes. Our universal APK is signed with deterministic cryptographic keys and can be verified against the public SHA-256 checksum published on our official website.',
+      },
+    ],
+  },
 };
+

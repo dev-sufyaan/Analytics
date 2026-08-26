@@ -2,8 +2,14 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { SITE_CONFIG } from '@/lib/seo/seo-config';
-import { getOrganizationSchema, getWebSiteSchema, getSoftwareApplicationSchema } from '@/lib/seo/json-ld';
+import {
+  getOrganizationSchema,
+  getWebSiteSchema,
+  getSoftwareApplicationSchema,
+  getMobileApplicationSchema,
+} from '@/lib/seo/json-ld';
 import PostHogProvider from '@/components/PostHogProvider';
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -83,7 +89,9 @@ const jsonLd = [
   getOrganizationSchema(),
   getWebSiteSchema(),
   getSoftwareApplicationSchema(),
+  getMobileApplicationSchema(),
 ];
+
 
 export default function RootLayout({
   children,

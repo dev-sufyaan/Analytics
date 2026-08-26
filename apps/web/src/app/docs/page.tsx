@@ -538,8 +538,15 @@ window.analytics.track('${docEventName}', {
                       9. Best Practices & CSP
                     </a>
                   </li>
+                  <li>
+                    <a href="#android-app" className="hover:text-black transition-colors block py-1 font-medium text-black inline-flex items-center gap-1.5">
+                      <span>10. Android Mobile App</span>
+                      <span className="bg-[#c8f6f9] text-[#010120] font-mono text-[9px] px-1 py-0.5 rounded font-bold uppercase">v2.0</span>
+                    </a>
+                  </li>
                 </ul>
               </div>
+
 
               <div className="p-4 bg-[#fafafa] border border-[#ebebeb] rounded-[4px]">
                 <span className="font-mono text-[10px] uppercase text-[#71717a] block mb-1">
@@ -931,9 +938,90 @@ Content-Security-Policy: script-src 'self' https://yourdomain.com; connect-src '
                 title="CSP HEADERS"
               />
             </section>
+
+            {/* 10. Android Mobile App */}
+            <section id="android-app" className="scroll-mt-24">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-mono text-[11px] font-medium tracking-[0.055em] uppercase text-[#71717a]">
+                  10 // NATIVE ANDROID MOBILE APP
+                </span>
+                <span className="bg-[#c8f6f9] text-[#010120] font-mono text-[10px] px-2 py-0.5 rounded font-bold uppercase">
+                  v2.0.0 APK
+                </span>
+              </div>
+              <h2 className="font-display text-[28px] md:text-[34px] font-medium tracking-[-0.6px] text-black mb-4">
+                Official Android App &amp; APK Sideloading
+              </h2>
+              <p className="font-display text-[15px] leading-[24px] text-[#71717a] mb-6">
+                Analytics by Sufyaan Studio offers an official high-performance native Android application built with React Native and the Hermes engine. It features native 60fps charts, sub-50ms cold start, persistent offline caching, hardware Keystore biometric encryption, and in-app self-updating.
+              </p>
+
+              <div className="space-y-6">
+                <div className="p-6 bg-[#010120] text-white rounded-[6px] border border-[#26263a] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div className="space-y-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-[#c8f6f9] block">
+                      OFFICIAL DIRECT DISTRIBUTION
+                    </span>
+                    <h3 className="font-display text-[20px] font-medium">
+                      Download Analytics v2.0.0 APK (76.3 MB)
+                    </h3>
+                    <p className="font-display text-[13px] text-[#999999] max-w-md">
+                      Universal signed APK for Android 10 through 15. Distributed exclusively via our official website to eliminate Google Play store telemetry.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <a
+                      href="/analytics-latest.apk"
+                      download="analytics-latest.apk"
+                      className="px-5 py-3 bg-[#c8f6f9] text-[#010120] font-mono text-[12px] uppercase font-bold rounded-[4px] hover:bg-[#b0f0f4] transition-colors inline-flex items-center gap-2"
+                    >
+                      <span>Download APK</span>
+                    </a>
+                    <Link
+                      href="/download"
+                      className="px-4 py-3 bg-[#151538] text-white border border-[#26263a] font-mono text-[12px] uppercase rounded-[4px] hover:bg-[#202048] transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <span>QR Code &amp; Guide →</span>
+                    </Link>
+                  </div>
+                </div>
+
+                <CodeEditorMockup
+                  code={`# 1. Download official APK
+curl -O https://analytics.sufyaan.studio/analytics-latest.apk
+
+# 2. Verify SHA-256 Checksum
+sha256sum analytics-latest.apk
+# Expected: 1e188e8b993b2507d0d6baa7ee89f68552e301b59a8057a604c585df74f88fe6
+
+# 3. Optional: Install via ADB directly to a connected device
+adb install -r analytics-latest.apk`}
+                  title="CLI DOWNLOAD &amp; SHA-256 VERIFICATION"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                    <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">SECURITY</span>
+                    <p className="font-display text-[13px] text-black font-medium">Hardware Keystore</p>
+                    <p className="font-display text-[12px] text-[#71717a] mt-1">Biometric Fingerprint &amp; Face Unlock using Android hardware enclave.</p>
+                  </div>
+                  <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                    <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">NOTIFICATIONS</span>
+                    <p className="font-display text-[13px] text-black font-medium">Daily Digest &amp; Spikes</p>
+                    <p className="font-display text-[12px] text-[#71717a] mt-1">Receive automated traffic spike notifications powered by FCM topics.</p>
+                  </div>
+                  <div className="p-4 bg-[#f9f9f9] border border-[#ebebeb] rounded-[4px]">
+                    <span className="font-mono text-[11px] uppercase text-[#71717a] block mb-1">UPDATES</span>
+                    <p className="font-display text-[13px] text-black font-medium">In-App Self-Updater</p>
+                    <p className="font-display text-[12px] text-[#71717a] mt-1">Checks releases bucket on startup and installs in-place with 1 tap.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </main>
+
 
       {/* Footer & Wordmark */}
       <Footer />

@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // 1. Static Core Landing & Marketing Pages
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${baseUrl}/download`, lastModified: now, changeFrequency: 'weekly', priority: 0.95 },
     { url: `${baseUrl}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/docs`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${baseUrl}/privacy-first-analytics`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
@@ -22,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/tools`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${baseUrl}/design`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
+
 
   // 2. Competitor Alternatives & Comparisons
   const competitorRoutes: MetadataRoute.Sitemap = Object.values(COMPETITORS_DATA).map((c) => ({

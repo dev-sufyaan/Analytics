@@ -58,6 +58,7 @@ export function SiteHeader({ forceDark = false, forceLight = false }: SiteHeader
   const isDark = forceDark || (!isScrolled && !forceLight && pathname === '/') || mobileMenuOpen;
 
   const navLinks = [
+    { name: 'App', href: '/download', badge: 'NEW' },
     { name: 'Features', href: '/features' },
     { name: 'Alternatives', href: '/alternatives' },
     { name: 'Integrations', href: '/integrations' },
@@ -86,14 +87,14 @@ export function SiteHeader({ forceDark = false, forceLight = false }: SiteHeader
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 font-display text-[15px]">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-7 font-display text-[15px]">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors ${
+                className={`inline-flex items-center gap-1.5 transition-colors ${
                   isDark
                     ? isActive
                       ? 'text-white font-medium'
@@ -103,11 +104,17 @@ export function SiteHeader({ forceDark = false, forceLight = false }: SiteHeader
                     : 'text-[#71717a] hover:text-black'
                 }`}
               >
-                {link.name}
+                <span>{link.name}</span>
+                {link.badge && (
+                  <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-[3px] bg-[#c8f6f9] text-[#010120] tracking-wider uppercase">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
+
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
@@ -198,12 +205,20 @@ export function SiteHeader({ forceDark = false, forceLight = false }: SiteHeader
                           : 'text-zinc-300 hover:bg-[#1a1a30] hover:text-white'
                       }`}
                     >
-                      <span>{link.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{link.name}</span>
+                        {link.badge && (
+                          <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-[3px] bg-[#c8f6f9] text-[#010120] uppercase">
+                            {link.badge}
+                          </span>
+                        )}
+                      </div>
                       <ArrowRight className="w-4 h-4 opacity-40" />
                     </Link>
                   );
                 })}
               </nav>
+
 
               {/* Quick Tools & Guides Grid */}
               <div className="pt-4 border-t border-[#26263a] space-y-2.5">

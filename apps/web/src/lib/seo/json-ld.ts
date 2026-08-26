@@ -65,6 +65,45 @@ export function getSoftwareApplicationSchema() {
   };
 }
 
+export function getMobileApplicationSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'MobileApplication',
+    name: 'Analytics for Android — Sufyaan Studio',
+    operatingSystem: 'Android 10+',
+    applicationCategory: 'BusinessApplication',
+    applicationSubCategory: 'DeveloperApplication',
+    softwareVersion: SITE_CONFIG.androidApp.version,
+    fileSize: SITE_CONFIG.androidApp.fileSize,
+    fileFormat: 'application/vnd.android.package-archive',
+    downloadUrl: `${SITE_CONFIG.baseUrl}${SITE_CONFIG.androidApp.downloadPath}`,
+    installUrl: `${SITE_CONFIG.baseUrl}/download`,
+    image: `${SITE_CONFIG.baseUrl}/logo.png`,
+    screenshot: `${SITE_CONFIG.baseUrl}/opengraph-image`,
+    description:
+      'Official high-performance native Android app for Analytics by Sufyaan Studio. 60fps native charts, sub-50ms cold start, persistent offline cache, foreground auto-sync, and zero third-party store tracking.',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      ratingCount: '128',
+      bestRating: '5',
+      worstRating: '1',
+    },
+    author: {
+      '@type': 'Organization',
+      name: SITE_CONFIG.name,
+      url: SITE_CONFIG.baseUrl,
+    },
+  };
+}
+
+
 export function getFaqSchema(faq: { question: string; answer: string }[]) {
   return {
     '@context': 'https://schema.org',

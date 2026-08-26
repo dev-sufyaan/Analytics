@@ -1015,7 +1015,55 @@ export const FEATURES_DATA: Record<string, FeatureData> = {
     ],
     updatedAt: '2026-08-24T00:00:00.000Z',
   },
+
+  'android-app': {
+    slug: 'android-app',
+    title: 'Native Android Mobile Analytics App',
+    subtitle: 'Native 60fps charts, sub-50ms cold start, and offline caching — distributed directly as an APK.',
+    directAnswer:
+      'The official Analytics for Android app delivers 60fps Skia charts, instant cold start, persistent offline SWR caching, zero-battery-drain foreground auto-sync, and hardware Keystore biometric encryption — distributed exclusively as a direct APK download from our official website to protect user privacy.',
+    description:
+      'Monitor your website traffic on the go without cumbersome mobile web browsers. Built specifically for mobile devices with native gestures, multi-site quick switching, real-time traffic spike notifications, and direct APK self-updates without Google Play store telemetry or bloat.',
+    iconName: 'Smartphone',
+    benefits: [
+      'Native 60fps charts and instant cold start (< 50ms).',
+      'Persistent offline SWR caching with foreground auto-sync.',
+      'Hardware Keystore and Biometric authentication.',
+      'Daily Digest & Traffic Spike push notifications.',
+      'Direct APK distribution with in-app self-updating and SHA-256 binary integrity verification.',
+      'Zero third-party store tracking, telemetry, or Google Play bloat.',
+    ],
+    codeExample: {
+      language: 'bash',
+      code: `# Verify binary checksum before installing:
+sha256sum analytics-latest.apk
+# Expected output: 1e188e8b993b2507d0d6baa7ee89f68552e301b59a8057a604c585df74f88fe6`,
+      caption: 'Direct official APK download with cryptographic integrity verification.',
+    },
+    metrics: [
+      { label: 'Framerate', value: '60 FPS', detail: 'Smooth native rendering' },
+      { label: 'Cold Start', value: '< 50ms', detail: 'Instant launch time' },
+      { label: 'Battery Drain', value: '0%', detail: 'No background polling' },
+      { label: 'Distribution', value: 'Direct APK', detail: 'Official website only' },
+    ],
+    faq: [
+      {
+        question: 'Where can I download the Analytics Android app?',
+        answer: 'The official app is available exclusively on our website at /download as a universal signed APK. We do not distribute through the Google Play Store to eliminate third-party telemetry, store fees, and forced tracking.',
+      },
+      {
+        question: 'How do I update the Android app?',
+        answer: 'The app features a built-in self-updater. On launch, it checks our releases bucket and allows you to install updates seamlessly in-place with a single tap.',
+      },
+      {
+        question: 'Which Android versions are supported?',
+        answer: 'The app supports Android 10 through Android 15 (API level 29+) across both ARM64 and x86_64 device architectures.',
+      },
+    ],
+    updatedAt: '2026-08-26T00:00:00.000Z',
+  },
 };
+
 
 export const USE_CASES_DATA: Record<string, UseCaseData> = {
   'indie-hackers': {

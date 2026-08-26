@@ -251,10 +251,12 @@ export default {
         // Fallback default manifest
         return new Response(
           JSON.stringify({
-            version: '1.0.2',
-            versionCode: 3,
-            apkUrl: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
-            sha256: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+            version: '2.0.0',
+            versionCode: 4,
+            minSupportedVersionCode: 1,
+            downloadUrl:
+              'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
+            releaseNotes: 'V2.0 — Full 100% Adblocker and Brave Shields evasion support, real-time analytics updates, and performance enhancements.',
             changelog: 'Production release with instant cold start, native 60fps charts, and auto-sync.',
             fileSize: '24.5 MB',
           }),
