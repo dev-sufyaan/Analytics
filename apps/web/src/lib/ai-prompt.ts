@@ -13,29 +13,103 @@ export interface AiPromptParams {
 
 export function buildAiPrompt({ websiteId, domain, origin, siteName }: AiPromptParams): string {
   const snippet = `<script defer src="${origin}/t.js" data-web="${websiteId}"></script>`;
+  const proxySnippet = `// 1. In next.config.js (or next.config.mjs):
+module.exports = {
+  async rewrites() {
+    return [
+      { source: '/stats.js', destination: '${origin}/t.js' },
+      { source: '/api/send', destination: '${origin}/c' },
+    ];
+  },
+};
+
+// 2. In your HTML / layout:
+<script defer src="/stats.js" data-web="${websiteId}" data-endpoint="/api/send"></script>`;
   const today = new Date().toISOString().slice(0, 10);
 
   return `# Analytics by Sufyaan Studio — AI Agent Integration Instructions
 Generated: ${today} | Website: ${siteName || domain} (${domain}) | ID: ${websiteId} | Origin: ${origin}
-Source of truth: packages/tracker/src/t.ts (1.15KB gzipped, ≤1.5KB budget) + apps/web/lib/ingest-guards.mjs + supabase/migrations
+Source of truth: packages/tracker/src/t.ts (<2KB gzipped, 0 deps) + apps/web/lib/ingest-guards.mjs + apps/collect/src/index.ts
 
 ## 1. GOAL
-Add privacy-first, cookie-less pageview + custom-event tracking to this codebase. The install must be framework-aware, idempotent, and verifiable in <2 minutes.
+Add privacy-first, cookie-less pageview + custom-event tracking to this codebase with 100% adblocker resilience (Brave Shields, uBlock Origin, EasyPrivacy). The install must be framework-aware, idempotent, and verifiable in <2 minutes.
 
 ## 2. PROJECT CONTEXT
-- Product: Analytics by Sufyaan Studio — Best-in-class privacy-first website analytics. Tiny tracker, edge ingest, instant dashboard.
-- Tracker: vanilla JS, 0 deps, window.analytics (not window.aether/umami). Global: window.analytics.track(name, props), window.analytics.pageview(), window.analytics.flush()
-- Collect: POST ${origin}/c (Cloudflare Worker, also /t.js). 16KB body cap, 10 events/batch. Returns 204 always (never 500). Validate via ingest-guards.mjs logic — do NOT proxy through Next.js /api.
-- Privacy: No cookies, no localStorage ID, no raw IP stored. visitor_hash = sha256(websiteId:ip:ua:salt) salt rotates daily (SALT_ROTATION=day|week|month, default day). Do not fingerprint.
-- Limits: event_name ≤128 chars, title ≤512, path ≤1024, query ≤512, event_data ≤2KB, hostname ≤255. Names starting with = + - @ tab are rejected (CSV guard). Bots + empty UA dropped. Dedupe 1s same-path pageview.
+- Product: Analytics by Sufyaan Studio — Privacy-first website analytics. Ultra-lightweight tracker, edge ingest, instant dashboard.
+- Tracker: vanilla JS, 0 dependencies, multi-namespace (window.analytics, window.sa, window.umami).
+- Collect: POST ${origin}/c or /api/send (Cloudflare Worker). 16KB body cap, 10 events/batch. Returns 204 No Content.
+- Privacy: No cookies, no localStorage ID, no raw IP stored. Session hash = sha256(websiteId:ip:ua:salt) rotating daily.
+- Compatibility: Drop-in replacement for Umami and Plausible. Supports declarative HTML tracking and identify API.
 
 ## 3. REQUIRED ACTION — INSTALL THE SNIPPET
-Website ID (REAL, do not invent): ${websiteId}
-Domain (REAL): ${domain}
-Snippet to paste:
+
+### Option A: Standard Direct Snippet (Fastest, 10 seconds)
 \`\`\`html
 ${snippet}
 \`\`\`
+
+### Option B: First-Party Proxy (100% Brave Shields & Adblocker Bypass — RECOMMENDED)
+Configure a reverse proxy / rewrite on the project's own domain so browser adblockers cannot block requests:
+
+- **Next.js** (\`next.config.mjs\`):
+\`\`\`js
+export default {
+  async rewrites() {
+    return [
+      { source: '/stats.js', destination: '${origin}/t.js' },
+      { source: '/api/send', destination: '${origin}/c' },
+    ];
+  },
+};
+\`\`\`
+
+- **Nuxt 3 / Nitro** (\`nuxt.config.ts\`):
+\`\`\`ts
+export default defineNuxtConfig({
+  routeRules: {
+    '/stats.js': { proxy: '${origin}/t.js' },
+    '/api/send': { proxy: '${origin}/c' },
+  }
+});
+\`\`\`
+
+- **Vercel** (\`vercel.json\` for Vite / React / Svelte):
+\`\`\`json
+{
+  "rewrites": [
+    { "source": "/stats.js", "destination": "${origin}/t.js" },
+    { "source": "/api/send", "destination": "${origin}/c" }
+  ]
+}
+\`\`\`
+
+- **Netlify / Cloudflare Pages** (\`public/_redirects\`):
+\`\`\`text
+/stats.js    ${origin}/t.js    200
+/api/send    ${origin}/c       200
+\`\`\`
+
+- **Astro** (\`astro.config.mjs\`):
+\`\`\`js
+export default defineConfig({
+  redirects: {
+    '/stats.js': '${origin}/t.js',
+    '/api/send': '${origin}/c',
+  }
+});
+\`\`\`
+
+- **Nginx** (\`nginx.conf\` for WordPress / PHP / VPS):
+\`\`\`nginx
+location /stats.js { proxy_pass ${origin}/t.js; proxy_ssl_server_name on; }
+location /api/send { proxy_pass ${origin}/c; proxy_ssl_server_name on; }
+\`\`\`
+
+Then paste this proxy script into the site's <head> / layout:
+\`\`\`html
+<script defer src="/stats.js" data-web="${websiteId}" data-endpoint="/api/send"></script>
+\`\`\`
+
 Placement (detect framework and do exactly one):
 - **Next.js App Router**: app/layout.tsx → <Script defer src="${origin}/t.js" data-web="${websiteId}" strategy="afterInteractive" /> inside <head>
 - **Next.js Pages**: pages/_app.tsx or pages/_document.tsx <Head>
@@ -45,59 +119,39 @@ Placement (detect framework and do exactly one):
 - **Astro**: src/layouts/Layout.astro <head>
 - **Remix**: app/root.tsx <head>
 - **WordPress/Shopify/Webflow**: Theme → Custom Code → Header injection
-Attributes (only these):
-- data-web="${websiteId}" REQUIRED
-- data-host="${origin}" OPTIONAL — custom collector origin (defaults to script origin)
-- data-dev="true" OPTIONAL — allow localhost/127.0.0.1/::1/*.local
-- data-respect-dnt="true" OPTIONAL — honor navigator.doNotTrack=1
 
-## 4. SPA HANDLING (CRITICAL)
-Tracker auto patches history.pushState/replaceState + popstate. No extra code needed. On route change it fires pageview with new pathname. Keep pathname-only in u (query in q). For hash routers, hash is kept as part of path.
+Supported Script Attributes:
+- data-web="${websiteId}" or data-website-id="${websiteId}" (REQUIRED)
+- data-host="${origin}" (OPTIONAL — collector host override)
+- data-endpoint="/api/send" (OPTIONAL — custom collect endpoint, e.g. /api/send or /c)
+- data-domains="mysite.com,app.mysite.com" (OPTIONAL — restrict tracking to specific domains)
+- data-dev="true" (OPTIONAL — allow localhost / 127.0.0.1 tracking during local development)
+- data-respect-dnt="true" (OPTIONAL — honor navigator.doNotTrack=1)
+- data-tag="v1.0" (OPTIONAL — tag version or cohort)
 
-## 5. WHAT IS AUTO-CAPTURED (no code)
-Per pageview: u=pathname (/pricing), q=search (?utm_source=google&utm_medium=cpc&gclid=xyz — UTMs auto-parsed server-side → utm_source/medium/campaign/content/term,gclid/fbclid/msclkid/ttclid/lifatid/twclid), r=document.referrer (host+path dropped if self), t=document.title (512, formula-guarded), s=screen WxH, l=navigator.language, h=hostname, browser/os/device from UA. hostname stored per-event for multi-domain.
+## 4. SPA ROUTING & NAVIGATION
+Tracker automatically patches history.pushState / history.replaceState, popstate, and hashchange. No custom router listeners needed.
 
-## 6. CUSTOM EVENTS — MANDATORY (pageviews are automatic, events are NOT)
-You MUST add custom event tracking for key interactions. Scan the codebase for buttons, forms, CTAs, and instrument them. Do not skip — dashboard Events panel will be empty without this.
-
-API (global is window.analytics, NOT umami/aether):
-\`\`\`js
-// Basic:
-window.analytics.track('cta_clicked')
-window.analytics.track('signup_completed', { plan: 'pro', source: 'pricing_cta' })
-window.analytics.track('purchase_success', { order_id: 'ord_123', amount: 240, currency: 'USD' })
-
-// Framework examples — add to actual onClick / onSubmit handlers in this repo:
-// React/Next.js:
-<button onClick={() => window.analytics.track('signup_clicked', { location: 'hero' })}>Sign up</button>
-// Vue:
-<button @click="() => window.analytics.track('checkout_started', { amount: 99 })">Buy</button>
-// HTML/vanilla:
-document.querySelector('#pricing-cta')?.addEventListener('click', () => window.analytics.track('pricing_cta_clicked'));
-// Form:
-form.addEventListener('submit', () => window.analytics.track('form_submitted', { form: 'contact' }));
-\`\`\`
-Recommended events to add (pick at least 3-5 that exist in this site):
-- signup_clicked / signup_completed, login_clicked, pricing_cta_clicked, checkout_started, purchase_success, contact_form_submitted, demo_requested, newsletter_subscribed
-Validation: name trimmed, ≤128 chars, no =+-@ prefix (CSV guard). Props must be plain object ≤2KB (arrays wrapped as {value: ...}). Identical payload within 1s deduped client-side. Verify via console: window.analytics.track('test_event', {from: 'ai_agent'}) → Network /c 204 → Dashboard Events panel within 30s.
-
-## 6b. FULL WEBSITE AUTO-TRACKING PACK — COPY-PASTE FOR 100% COVERAGE
-Add this ONE robust pack after the snippet (or as /public/analytics-auto.js) to auto-track scroll, all buttons, forms, external links, file downloads, and outbound clicks for ANY stack. It uses delegation, so it works for SPA route changes without edits.
-
+## 5. DECLARATIVE HTML CLICK TRACKING (NO JAVASCRIPT NEEDED)
+Add data-event attributes directly to any HTML elements:
 \`\`\`html
-<!-- Add AFTER the Analytics snippet in <head> or before </body> -->
-<script>
-// Analytics Auto-Track — scroll, clicks, forms, links, downloads (robust, no deps)
-(function(){
-  if (typeof window==='undefined' || !window.analytics) return;
-  var track = function(n,p){ try{window.analytics.track(n,p)}catch(e){} };
-  // 1. Scroll depth 25/50/75/100 — once per page
-  var maxScroll=0, sent={}; function onScroll(){
-    var h=document.documentElement, st=window.scrollY||h.scrollTop, sh=h.scrollHeight - window.innerHeight;
-    var pct= sh>0 ? Math.round((st/sh)*100) : 0;
-    [25,50,75,100].forEach(function(m){
-      if(pct>=m && maxScroll<m && !sent[m]){
-        sent[m]=1; maxScroll=m; track('scroll_depth',{percent:m, path: location.pathname});
+<button data-event="upgrade_click" data-event-plan="pro">Upgrade to Pro</button>
+<a href="/pricing" data-event="view_pricing" data-event-source="hero">See Pricing</a>
+\`\`\`
+*(Link clicks automatically use guaranteed navigation to prevent beacon drops during page unload).*
+
+## 6. PROGRAMMATIC JAVASCRIPT TRACKING
+Use window.analytics or window.umami anywhere in your code:
+\`\`\`js
+// Track custom events:
+window.analytics.track('signup_completed', { plan: 'pro', source: 'pricing_page' });
+// or Umami syntax:
+window.umami.track('purchase', { amount: 49, currency: 'USD' });
+
+// Identify logged-in users (persists across subsequent pageviews):
+window.analytics.identify('user_12345', { role: 'admin', tier: 'premium' });
+\`\`\`
+
       }
     });
   }

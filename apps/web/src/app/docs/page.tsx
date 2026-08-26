@@ -41,9 +41,156 @@ export default function DocsPage() {
     string,
     { title: string; badge: string; description: string; code: string; install?: string }
   > = {
+    nextjsProxy: {
+      title: 'Next.js 1st-Party Proxy (100% Adblocker & Brave Shields Bypass)',
+      badge: '100% BYPASS',
+      description: 'Serve tracking through your Next.js domain so Brave Shields and uBlock Origin cannot block requests.',
+      code: `// next.config.mjs (or next.config.js)
+const nextConfig = {
+  async rewrites() {
+    return [
+      { source: '/stats.js', destination: 'https://analytics-collect.sufyaanstudio.workers.dev/t.js' },
+      { source: '/api/send', destination: 'https://analytics-collect.sufyaanstudio.workers.dev/c' },
+    ];
+  },
+};
+export default nextConfig;
+
+// In app/layout.tsx (App Router) or <head>:
+<script
+  defer
+  src="/stats.js"
+  data-web="YOUR_WEBSITE_ID"
+  data-endpoint="/api/send"
+/>`,
+    },
+    nuxtProxy: {
+      title: 'Nuxt 3 / Nitro 1st-Party Proxy',
+      badge: '100% BYPASS',
+      description: 'Proxy tracking via Nuxt routeRules so all beacons stay strictly on your domain.',
+      code: `// nuxt.config.ts
+export default defineNuxtConfig({
+  routeRules: {
+    '/stats.js': { proxy: 'https://analytics-collect.sufyaanstudio.workers.dev/t.js' },
+    '/api/send': { proxy: 'https://analytics-collect.sufyaanstudio.workers.dev/c' },
+  },
+  app: {
+    head: {
+      script: [
+        {
+          src: '/stats.js',
+          defer: true,
+          'data-web': 'YOUR_WEBSITE_ID',
+          'data-endpoint': '/api/send'
+        }
+      ]
+    }
+  }
+});`,
+    },
+    vercelProxy: {
+      title: 'Vercel / React / Vite / Svelte (vercel.json)',
+      badge: '100% BYPASS',
+      description: 'Add edge rewrites in vercel.json for any frontend framework hosted on Vercel.',
+      code: `// vercel.json
+{
+  "rewrites": [
+    { "source": "/stats.js", "destination": "https://analytics-collect.sufyaanstudio.workers.dev/t.js" },
+    { "source": "/api/send", "destination": "https://analytics-collect.sufyaanstudio.workers.dev/c" }
+  ]
+}
+
+<!-- In index.html <head>: -->
+<script
+  defer
+  src="/stats.js"
+  data-web="YOUR_WEBSITE_ID"
+  data-endpoint="/api/send"
+></script>`,
+    },
+    netlifyProxy: {
+      title: 'Netlify & Cloudflare Pages (_redirects)',
+      badge: '100% BYPASS',
+      description: 'Drop a 2-line _redirects file into your public folder for 1st-party edge rewrites.',
+      code: `# public/_redirects
+/stats.js    https://analytics-collect.sufyaanstudio.workers.dev/t.js    200
+/api/send    https://analytics-collect.sufyaanstudio.workers.dev/c       200
+
+<!-- In your HTML <head>: -->
+<script
+  defer
+  src="/stats.js"
+  data-web="YOUR_WEBSITE_ID"
+  data-endpoint="/api/send"
+></script>`,
+    },
+    astroProxy: {
+      title: 'Astro (astro.config.mjs)',
+      badge: '100% BYPASS',
+      description: 'Configure SSR/SSG redirects in astro.config.mjs for zero adblocker interference.',
+      code: `// astro.config.mjs
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  redirects: {
+    '/stats.js': 'https://analytics-collect.sufyaanstudio.workers.dev/t.js',
+    '/api/send': 'https://analytics-collect.sufyaanstudio.workers.dev/c',
+  }
+});
+
+<!-- In src/layouts/Layout.astro: -->
+<script
+  defer
+  src="/stats.js"
+  data-web="YOUR_WEBSITE_ID"
+  data-endpoint="/api/send"
+></script>`,
+    },
+    nginxProxy: {
+      title: 'Nginx / WordPress / Apache / VPS',
+      badge: '100% BYPASS',
+      description: 'Reverse proxy tracking requests through Nginx for WordPress, PHP, Django, Rails, or custom backends.',
+      code: `# nginx.conf
+location /stats.js {
+    proxy_pass https://analytics-collect.sufyaanstudio.workers.dev/t.js;
+    proxy_set_header Host analytics-collect.sufyaanstudio.workers.dev;
+    proxy_ssl_server_name on;
+}
+
+location /api/send {
+    proxy_pass https://analytics-collect.sufyaanstudio.workers.dev/c;
+    proxy_set_header Host analytics-collect.sufyaanstudio.workers.dev;
+    proxy_ssl_server_name on;
+}
+
+<!-- In your HTML or WordPress header.php: -->
+<script
+  defer
+  src="/stats.js"
+  data-web="YOUR_WEBSITE_ID"
+  data-endpoint="/api/send"
+></script>`,
+    },
+    cloudflareProxy: {
+      title: 'Cloudflare Rules (Shopify, Webflow, Ghost)',
+      badge: 'NO-CODE BYPASS',
+      description: 'Add Transform/Rewrite Rules in your Cloudflare dashboard for any no-code site on a custom domain.',
+      code: `/* Cloudflare Rules -> Transform Rules -> Rewrite URL:
+   Rule 1: If URI Path equals "/stats.js" -> Rewrite to "https://analytics-collect.sufyaanstudio.workers.dev/t.js"
+   Rule 2: If URI Path equals "/api/send" -> Rewrite to "https://analytics-collect.sufyaanstudio.workers.dev/c"
+*/
+
+<!-- In your Webflow/Shopify/Ghost Custom Code Header: -->
+<script
+  defer
+  src="/stats.js"
+  data-web="YOUR_WEBSITE_ID"
+  data-endpoint="/api/send"
+></script>`,
+    },
     nextjs: {
       title: 'Next.js (App Router & Pages Router)',
-      badge: 'RECOMMENDED',
+      badge: 'DIRECT',
       description: 'Add the Script component in your root layout for automatic SPA route change tracking.',
       code: `// app/layout.tsx (App Router)
 import Script from 'next/script';
@@ -54,7 +201,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <Script
           defer
-          src="https://yourdomain.com/t.js"
+          src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
           data-web="YOUR_WEBSITE_ID"
           strategy="afterInteractive"
         />
@@ -64,6 +211,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }`,
     },
+    umami: {
+      title: 'Umami Drop-in Replacement',
+      badge: 'DROP-IN',
+      description: 'Migrate seamlessly from Umami without altering your tracking tags or existing window.umami.track() calls.',
+      code: `<!-- Umami Drop-in Snippet -->
+<script
+  defer
+  src="https://analytics-collect.sufyaanstudio.workers.dev/script.js"
+  data-website-id="YOUR_WEBSITE_ID"
+></script>
+
+<!-- Programmatic usage works out of the box: -->
+<script>
+  window.umami.track('signup', { plan: 'growth' });
+</script>`,
+    },
     html: {
       title: 'HTML5 / Static Websites & Local Files',
       badge: 'UNIVERSAL',
@@ -71,7 +234,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       code: `<!-- Add inside the <head> section -->
 <script
   defer
-  src="https://yourdomain.com/t.js"
+  src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
   data-web="YOUR_WEBSITE_ID"
 ></script>`,
     },
@@ -87,7 +250,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <title>My Vite App</title>
     <script
       defer
-      src="https://yourdomain.com/t.js"
+      src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
       data-web="YOUR_WEBSITE_ID"
     ></script>
   </head>
@@ -107,7 +270,7 @@ export default defineNuxtConfig({
     head: {
       script: [
         {
-          src: 'https://yourdomain.com/t.js',
+          src: 'https://analytics-collect.sufyaanstudio.workers.dev/t.js',
           defer: true,
           'data-web': 'YOUR_WEBSITE_ID'
         }
@@ -128,7 +291,7 @@ export default defineNuxtConfig({
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script
       defer
-      src="https://yourdomain.com/t.js"
+      src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
       data-web="YOUR_WEBSITE_ID"
     ></script>
     %sveltekit.head%
@@ -156,7 +319,7 @@ const { title } = Astro.props;
     <title>{title}</title>
     <script
       defer
-      src="https://yourdomain.com/t.js"
+      src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
       data-web="YOUR_WEBSITE_ID"
     ></script>
   </head>
@@ -180,7 +343,7 @@ export default function App() {
         <Links />
         <script
           defer
-          src="https://yourdomain.com/t.js"
+          src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
           data-web="YOUR_WEBSITE_ID"
         />
       </head>
@@ -200,10 +363,11 @@ export default function App() {
       code: `<!-- Custom Code / Header Injection -->
 <script
   defer
-  src="https://yourdomain.com/t.js"
+  src="https://analytics-collect.sufyaanstudio.workers.dev/t.js"
   data-web="YOUR_WEBSITE_ID"
 ></script>`,
     },
+
   };
 
   const backendSnippets: Record<string, { title: string; code: string }> = {
