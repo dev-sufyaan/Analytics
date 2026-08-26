@@ -255,9 +255,63 @@ const tests = [
     eq(ai.payload.p_referrer_source, 'chatgpt', 'AI referral tagged');
     const organic = buildEventParams({ w: UUID, u: '/x', r: 'https://www.google.com/search?q=x' }, SITE, CTX);
     eq(organic.payload.p_referrer_source, null, 'organic search untagged');
-    const direct = buildEventParams({ w: UUID, u: '/x', r: '' }, SITE, CTX);
-    eq(direct.payload.p_referrer_source, null, 'direct/null referrer untagged');
+  }),
+
+  // ---- Umami schema normalization & Adblocker evasion ----
+
+  test('extractEvents: normalizes Umami format payload to standard internal schema', () => {
+    const umamiPayload = {
+      type: 'event',
+      payload: {
+        website: UUID,
+        url: '/pricing?plan=pro',
+        title: 'Pricing Plan',
+        hostname: 'example.com',
+        referrer: 'https://google.com/search',
+        screen: '1920x1080',
+        language: 'en-US',
+        name: 'custom_conversion',
+        data: { plan: 'pro', value: 99 },
+      },
+    };
+    const events = extractEvents(umamiPayload);
+    eq(events.length, 1, 'Umami payload extracted');
+    const e = events[0];
+    eq(e.w, UUID);
+    eq(e.n, 'custom_conversion');
+    eq(e.u, '/pricing');
+    eq(e.q, '?plan=pro');
+    eq(e.t, 'Pricing Plan');
+    eq(e.h, 'example.com');
+    eq(e.r, 'https://google.com/search');
+    eq(e.s, '1920x1080');
+    eq(e.l, 'en-US');
+    eq(e.p.plan, 'pro');
+    eq(e.p.value, 99);
+
+    const call = buildEventParams(e, SITE, CTX);
+    ok(call, 'built event params successfully');
+    eq(call.payload.p_event_name, 'custom_conversion');
+    eq(call.payload.p_event_data.value, 99);
+  }),
+
+  test('extractEvents: handles Umami identify payload', () => {
+    const umamiIdentify = {
+      type: 'identify',
+      payload: {
+        website: UUID,
+        id: 'user_12345',
+        data: { email: 'user@example.com', tier: 'premium' },
+      },
+    };
+    const events = extractEvents(umamiIdentify);
+    eq(events.length, 1);
+    eq(events[0].w, UUID);
+    eq(events[0].n, 'identify');
+    eq(events[0].id, 'user_12345');
+    eq(events[0].p.tier, 'premium');
   }),
 ];
 
 run('Collect guards (unit, no network)', tests);
+

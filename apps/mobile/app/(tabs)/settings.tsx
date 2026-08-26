@@ -465,7 +465,7 @@ export default function SettingsScreen() {
             <View style={styles.sectionGroup}>
               <Text style={styles.sectionLabel}>INSTALLATION · TRACKING CODE</Text>
               <View style={styles.groupedCard}>
-                <Text style={styles.cardDesc}>Paste before closing &lt;/head&gt; — under 1.5kB gzipped, no cookies.</Text>
+                <Text style={styles.cardDesc}>Paste before closing &lt;/head&gt; — under 2KB gzipped, zero cookies, Brave Shields & Umami drop-in compatible.</Text>
                 <View style={styles.codeBox}>
                   <Text style={styles.codeText} selectable>
                     {snippetCode}

@@ -14,6 +14,7 @@ import {
   CORS_HEADERS,
   getCorsHeaders,
   isLocalhostHost,
+  UUID_RE,
 } from '../../web/lib/ingest-guards.mjs';
 import { TRACKER_JS } from './tracker-bundle';
 
@@ -155,6 +156,36 @@ async function sendPushDigests(env: Env): Promise<void> {
   }
 }
 
+// 1x1 Transparent GIF for no-JS pixel tracking
+const GIF_1X1 = new Uint8Array([
+  71, 73, 70, 56, 57, 97, 1, 0, 1, 0, 128, 0, 0, 0, 0, 0,
+  255, 255, 255, 33, 249, 4, 1, 0, 0, 0, 0, 44, 0, 0, 0,
+  0, 1, 0, 1, 0, 0, 2, 2, 68, 1, 0, 59
+]);
+
+function isTrackerScriptPath(pathname: string, trackerScriptName?: string): boolean {
+  const common = ['/t.js', '/script.js', '/analytics.js', '/stats.js', '/app.js', '/telemetry.js', '/va/script.js'];
+  if (common.includes(pathname)) return true;
+  if (trackerScriptName) {
+    const names = trackerScriptName.split(',').map((s) => s.trim()).filter(Boolean);
+    for (const n of names) {
+      const normalized = n.startsWith('/') ? n : '/' + n;
+      if (pathname === normalized) return true;
+    }
+  }
+  return false;
+}
+
+function isCollectPath(pathname: string, collectEndpoint?: string): boolean {
+  const common = ['/c', '/api/send', '/collect', '/event', '/ping', '/api/v1/event'];
+  if (common.includes(pathname)) return true;
+  if (collectEndpoint) {
+    const normalized = collectEndpoint.startsWith('/') ? collectEndpoint : '/' + collectEndpoint;
+    if (pathname === normalized) return true;
+  }
+  return false;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -186,8 +217,8 @@ export default {
       );
     }
 
-    // 3. Tracker script — the same built bundle as apps/web/public/t.js.
-    if (url.pathname === '/t.js' || url.pathname === '/stats.js') {
+    // 3. Tracker script aliases (t.js, script.js, stats.js, analytics.js, app.js, or TRACKER_SCRIPT_NAME)
+    if (isTrackerScriptPath(url.pathname, (env as any).TRACKER_SCRIPT_NAME)) {
       return new Response(TRACKER_JS, {
         headers: {
           'Content-Type': 'application/javascript; charset=utf-8',
@@ -257,8 +288,52 @@ export default {
       }
     }
 
-    // 4. Collect endpoint: only POST /c. Everything else gets a silent 204.
-    if (url.pathname !== '/c' || request.method !== 'POST') {
+    // 3c. Pixel tracking fallback (1x1 transparent GIF)
+    if (url.pathname.startsWith('/p/') || url.pathname === '/pixel.gif' || url.pathname === '/p') {
+      const siteId = url.pathname.replace(/^\/p\/?/, '').trim() || url.searchParams.get('w') || url.searchParams.get('website');
+      if (siteId && UUID_RE.test(siteId)) {
+        ctx.waitUntil(
+          (async () => {
+            try {
+              const site = await fetchSite(siteId, env);
+              if (!site) return;
+              const pre = preflight(request, { ignoreList: env.IGNORE_IP, envIgnore: env.IGNORE_IP });
+              if (!pre.ok) return;
+              const rpcCtx = {
+                ua: pre.ua,
+                ip: pre.ip,
+                country: pre.country,
+                host: requestHost(request, null),
+                saltRotation: env.SALT_ROTATION || undefined,
+                removeTrailingSlash: env.REMOVE_TRAILING_SLASH === 'true',
+              };
+              const rawEv = {
+                w: siteId,
+                n: 'pageview',
+                u: url.searchParams.get('u') || '/',
+                r: request.headers.get('referer') || null,
+              };
+              const call = buildEventParams(rawEv, site, rpcCtx);
+              if (call) {
+                const batch = buildBatchRequest([call]);
+                await postIngest(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, batch, [call]);
+              }
+            } catch {}
+          })()
+        );
+      }
+      return new Response(GIF_1X1, {
+        headers: {
+          'Content-Type': 'image/gif',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Access-Control-Allow-Origin': corsHeaders['Access-Control-Allow-Origin'] || '*',
+          Vary: 'Origin',
+        },
+      });
+    }
+
+    // 4. Collect endpoints: /c, /api/send, /collect, /event, /ping, etc.
+    if (!isCollectPath(url.pathname, (env as any).COLLECT_API_ENDPOINT) || request.method !== 'POST') {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
@@ -345,3 +420,4 @@ export default {
     );
   },
 };
+

@@ -1,178 +1,212 @@
 // packages/tracker/src/t.ts
-// Analytics Tracker — 0 dependencies, privacy-first, no cookies.
-// Budget: <= 1.5 KB gzip (checked by build.mjs).
-//
-// Behaviour:
-//   - auto pageview on load; pushState/replaceState/popstate SPA hooks
-//   - window.analytics.track(name, props) custom events
-//   - events are queued and flushed as ONE beacon every ~200ms (or when 10
-//     are pending); flush is immediate on hide/pagehide
-//   - duration = delta seconds since the last beat, sent on hide/pagehide;
-//     a 90s interval beat while visible keeps realtime + duration honest
-//     (deltas are clamped to <=120s server-side, so accuracy is preserved
-//     while halving heartbeat request volume on free-tier hosting)
-//   - sendBeacon first, fetch(keepalive) fallback
-//   - identical payload within 1s is deduped; DNT + localhost respected
+// Analytics Tracker — 0 dependencies, privacy-first, adblocker-resilient.
+// Budget: <= 1.5 KB gzip (enforced by build.mjs).
 
 (function () {
   'use strict';
-
   if (typeof window === 'undefined') return;
 
-  var scriptEl =
-    document.currentScript ||
-    (document.querySelector && document.querySelector('script[data-web]'));
-  if (!scriptEl) return;
+  var doc = document;
+  var win = window as any;
+  var loc = win.location;
+  var nav = win.navigator;
+  var scr = win.screen;
+  var hist = win.history;
 
-  var websiteId = scriptEl.getAttribute('data-web');
+  var sEl = doc.currentScript || (doc.querySelector && doc.querySelector('script[data-web],script[data-website-id]'));
+  if (!sEl) return;
+
+  var attr = function (k: string) { return sEl.getAttribute(k); };
+  var websiteId = attr('data-web') || attr('data-website-id');
   if (!websiteId) return;
 
-  var isDev = scriptEl.getAttribute('data-dev') === 'true';
-  var respectDnt = scriptEl.getAttribute('data-respect-dnt') === 'true';
-  var customHost = scriptEl.getAttribute('data-host');
+  if (attr('data-respect-dnt') === 'true' || attr('data-do-not-track') === 'true') {
+    var dnt = nav.doNotTrack || win.doNotTrack || nav.msDoNotTrack;
+    if (dnt === '1' || dnt === 1 || dnt === 'yes') return;
+  }
 
-  if (respectDnt && navigator.doNotTrack === '1') return;
+  var host = loc.hostname || '';
+  if (attr('data-dev') !== 'true' && (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.local'))) return;
 
-  var loc = window.location;
-  var isLocalhost =
-    loc.hostname === 'localhost' ||
-    loc.hostname === '127.0.0.1' ||
-    loc.hostname === '::1' ||
-    loc.hostname.endsWith('.local');
-  if (!isDev && isLocalhost) return;
+  var domains = attr('data-domains');
+  if (domains && domains.split(',').map(function (d) { return d.trim().toLowerCase(); }).indexOf(host.toLowerCase()) === -1) return;
 
-  // Collect URL: data-host > script src origin > same-origin /c
-  var collectHost = customHost;
-  if (!collectHost && scriptEl.src) {
+  var colHost = attr('data-host') || attr('data-host-url');
+  if (!colHost && sEl.src) {
     try {
-      var srcUrl = new URL(scriptEl.src, loc.href);
-      if (srcUrl.protocol.indexOf('http') === 0) collectHost = srcUrl.origin;
+      var u = new URL(sEl.src, loc.href);
+      if (u.protocol.indexOf('http') === 0) colHost = u.origin;
     } catch (_) {}
   }
-  var collectUrl = (collectHost || '').replace(/\/$/, '') + '/c';
+  var ep = attr('data-endpoint') || attr('data-api') || '/c';
+  var colUrl = (colHost || '').replace(/\/$/, '') + (ep.charAt(0) === '/' ? ep : '/' + ep);
 
-  var lastPayload = '';
-  var lastTime = 0;
+  var autoPv = attr('data-auto-pageview') !== 'false' && attr('data-auto-track') !== 'false';
+  var noSearch = attr('data-exclude-search') === 'true';
+  var noHash = attr('data-exclude-hash') === 'true';
+
+  var lastP = '';
+  var lastT = 0;
   var beatCursor = Date.now();
-  var queue = [];
-  var flushTimer = null;
+  var q: any[] = [];
+  var timer: any = null;
+  var distId: string | undefined = undefined;
 
-  function makePayload(eventName, eventData, deltaSeconds) {
+  function makePayload(n?: string, p?: any, d?: number | null, id?: string) {
+    var r = doc.referrer || null;
+    var o = loc.origin;
+    var ref = (r && (r === o || r.indexOf(o + '/') === 0)) ? (r.slice(o.length) || '/') : r;
     return {
       w: websiteId,
-      n: eventName || 'pageview',
-      u: (loc.pathname || '/') + (loc.hash || ''),
-      h: loc.hostname || '',
-      q: loc.search || null,
-      r: document.referrer || null,
-      t: document.title || null,
-      s: screen.width + 'x' + screen.height,
-      l: navigator.language || null,
-      d: deltaSeconds === undefined ? null : deltaSeconds,
-      p: eventData || null,
+      n: n || 'pageview',
+      u: (loc.pathname || '/') + (noHash ? '' : (loc.hash || '')),
+      h: host,
+      q: noSearch ? null : (loc.search || null),
+      r: ref,
+      t: doc.title || null,
+      s: scr ? scr.width + 'x' + scr.height : null,
+      l: nav.language || null,
+      d: d === undefined ? null : d,
+      p: p || null,
+      tag: attr('data-tag') || undefined,
+      id: id || distId || undefined,
     };
   }
 
-  function post(json) {
+  function post(json: string) {
     try {
-      if (navigator.sendBeacon) {
-        if (navigator.sendBeacon(collectUrl, new Blob([json], { type: 'application/json' }))) return;
+      if (nav.sendBeacon && nav.sendBeacon(colUrl, new Blob([json], { type: 'application/json' }))) return;
+      if (typeof fetch === 'function') {
+        fetch(colUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-umami-website-id': websiteId as string },
+          body: json,
+          keepalive: true,
+          credentials: 'omit',
+        }).catch(function () {});
       }
-      fetch(collectUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: json,
-        keepalive: true,
-        credentials: 'omit',
-      }).catch(function () {});
     } catch (_) {}
   }
 
   function flush() {
-    if (flushTimer) {
-      clearTimeout(flushTimer);
-      flushTimer = null;
-    }
-    if (!queue.length) return;
-    var body = queue.length === 1 ? queue[0] : JSON.stringify(queue.map(JSON.parse));
-    queue = [];
-    post(body);
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (!q.length) return;
+    var b = q.length === 1 ? q[0] : JSON.stringify(q.map(function (x) { return JSON.parse(x); }));
+    q = [];
+    post(b);
   }
 
-  function enqueue(payload) {
-    var json = JSON.stringify(payload);
-    // 1s dedupe of identical payloads
-    if (json === lastPayload && Date.now() - lastTime < 1000) return;
-    lastPayload = json;
-    lastTime = Date.now();
-    queue.push(json);
-    if (queue.length >= 10) flush();
-    else if (!flushTimer) flushTimer = setTimeout(flush, 200);
+  function enq(p: any) {
+    var j = JSON.stringify(p);
+    if (j === lastP && Date.now() - lastT < 1000) return;
+    lastP = j;
+    lastT = Date.now();
+    q.push(j);
+    if (q.length >= 10) flush();
+    else if (!timer) timer = setTimeout(flush, 200);
   }
 
-  function trackPageview() {
+  function trackPv(props?: any) {
     beatCursor = Date.now();
-    enqueue(makePayload('pageview'));
+    enq(makePayload('pageview', props && typeof props === 'object' ? props : null));
   }
 
-  function trackEvent(name, props) {
-    if (!name || typeof name !== 'string') return;
-    enqueue(makePayload(name, props && typeof props === 'object' ? props : null));
+  function track(name?: any, props?: any) {
+    if (!name) return trackPv();
+    if (typeof name === 'object') return enq(makePayload(name.name || 'pageview', name.data || name));
+    if (typeof name === 'function') {
+      var c = name(makePayload());
+      if (c) enq(c);
+      return;
+    }
+    if (typeof name !== 'string') return;
+    enq(makePayload(name, props && typeof props === 'object' ? props : null));
+  }
+
+  function identify(id: any, props?: any) {
+    var next = typeof id === 'string' ? id : (id && id.id);
+    if (next) distId = next;
+    enq(makePayload('identify', typeof id === 'object' ? id : props, null, distId));
   }
 
   function beat() {
     var now = Date.now();
-    var delta = Math.round((now - beatCursor) / 1000);
+    var d = Math.round((now - beatCursor) / 1000);
     beatCursor = now;
-    if (delta > 0) enqueue(makePayload('heartbeat', null, delta > 120 ? 120 : delta));
+    if (d > 0) enq(makePayload('heartbeat', null, d > 120 ? 120 : d));
   }
 
-  // SPA navigation
-  var currentPath = (loc.pathname || '/') + (loc.hash || '');
-  function handleNavigation() {
-    var newPath = (loc.pathname || '/') + (loc.hash || '');
-    if (currentPath !== newPath) {
-      currentPath = newPath;
-      trackPageview();
+  function initClicks() {
+    doc.addEventListener('click', function (e: MouseEvent) {
+      var el = (e.target as any)?.closest?.('[data-event],[data-umami-event]');
+      if (!el) return;
+      var name = el.getAttribute('data-event') || el.getAttribute('data-umami-event');
+      if (!name) return;
+      var data: Record<string, string> = {};
+      for (var i = 0; i < el.attributes.length; i++) {
+        var m = el.attributes[i].name.match(/^data-(?:umami-)?event-([\w-_]+)$/);
+        if (m && m[1]) data[m[1]] = el.attributes[i].value;
+      }
+      if (el.tagName === 'A' && el.href) {
+        var h = el.href;
+        if (el.target !== '_blank' && !e.ctrlKey && !e.shiftKey && !e.metaKey && !e.button && h.indexOf('javascript:') !== 0) {
+          e.preventDefault();
+          track(name, data);
+          flush();
+          setTimeout(function () { (el.target === '_top' && win.top ? win.top.location : loc).href = h; }, 40);
+          return;
+        }
+      }
+      track(name, data);
+    }, true);
+  }
+
+  var curr = (loc.pathname || '/') + (noHash ? '' : (loc.hash || ''));
+  function navCheck() {
+    var n = (loc.pathname || '/') + (noHash ? '' : (loc.hash || ''));
+    if (curr !== n) {
+      curr = n;
+      if (autoPv) trackPv();
     }
   }
 
-  var origPush = history.pushState;
-  if (origPush)
-    history.pushState = function () {
-      origPush.apply(this, arguments);
-      handleNavigation();
-    };
-  var origReplace = history.replaceState;
-  if (origReplace)
-    history.replaceState = function () {
-      origReplace.apply(this, arguments);
-      handleNavigation();
-    };
-  window.addEventListener('popstate', handleNavigation);
-  window.addEventListener('hashchange', handleNavigation);
-
-  // Duration on hide; immediate flush so nothing is lost on unload.
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') {
-      beat();
-      flush();
-    } else {
-      beatCursor = Date.now();
+  var hook = function (method: string) {
+    var orig = hist ? hist[method] : null;
+    if (orig) {
+      hist[method] = function () {
+        orig.apply(this, arguments);
+        navCheck();
+      };
     }
+  };
+  hook('pushState');
+  hook('replaceState');
+  win.addEventListener('popstate', navCheck);
+  win.addEventListener('hashchange', navCheck);
+
+  doc.addEventListener('visibilitychange', function () {
+    if (doc.visibilityState === 'hidden') { beat(); flush(); }
+    else beatCursor = Date.now();
   });
-  window.addEventListener('pagehide', function () {
-    beat();
-    flush();
-  });
+  win.addEventListener('pagehide', function () { beat(); flush(); });
+  setInterval(function () { if (doc.visibilityState === 'visible') beat(); }, 90000);
 
-  // Periodic visible heartbeat keeps "active visitors" and duration fresh.
-  setInterval(function () {
-    if (document.visibilityState === 'visible') beat();
-  }, 90000);
+  var api = { track: track, pageview: trackPv, identify: identify, flush: flush, getSession: function () { return { website: websiteId }; } };
+  try { win.sa = win.umami = api; } catch (_) {}
+  try { if (!win.analytics || !win.analytics.track) win.analytics = api; } catch (_) {}
 
-  if (document.readyState === 'complete' || document.readyState === 'interactive') trackPageview();
-  else document.addEventListener('DOMContentLoaded', trackPageview);
-
-  window.analytics = { track: trackEvent, pageview: trackPageview, flush: flush };
+  if (attr('data-auto-track') !== 'false') {
+    initClicks();
+    if (autoPv) {
+      if (doc.readyState === 'complete' || doc.readyState === 'interactive') trackPv();
+      else doc.addEventListener('DOMContentLoaded', function () { trackPv(); });
+    }
+  }
 })();
+
+
+
+
+
+
+

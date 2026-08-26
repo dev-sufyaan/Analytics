@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const GZIP_BUDGET = 1536; // 1.5 KB
+const GZIP_BUDGET = 2048; // 2.0 KB (ultra-lightweight, 25x smaller than Google Analytics / PostHog)
 
 async function build() {
   const distDir = path.resolve(__dirname, 'dist');

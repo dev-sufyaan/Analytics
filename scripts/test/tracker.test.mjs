@@ -322,6 +322,61 @@ const tests = [
     ok(flat.some((b) => b.n === 'exit_intent'), 'queued event flushed on pagehide');
     ok(flat.some((b) => b.n === 'heartbeat' && b.d === 3), 'final beat included');
   }),
+
+  test('tracker: supports data-website-id alias and window.umami global', () => {
+    const t = loadTracker({ 'data-website-id': 'UMAMI-WEBSITE-ID' });
+    t.flushQueuedTimers();
+    eq(t.calls.length, 1);
+    eq(t.calls[0].body.w, 'UMAMI-WEBSITE-ID');
+    ok(t.sandbox.window.umami, 'window.umami is defined');
+    ok(t.sandbox.window.sa, 'window.sa is defined');
+
+    // Test umami track with object payload
+    t.sandbox.window.umami.track('custom_umami', { plan: 'growth' });
+    t.flushQueuedTimers();
+    const flat = flatBodies(t);
+    const ev = flat.find((b) => b.n === 'custom_umami');
+    ok(ev, 'umami custom event sent');
+    eq(ev.p.plan, 'growth');
+  }),
+
+  test('tracker: supports identify API and persists distinct id', () => {
+    const t = loadTracker({ 'data-web': 'W' });
+    t.flushQueuedTimers();
+    t.sandbox.window.analytics.identify('usr_999', { role: 'admin' });
+    t.flushQueuedTimers();
+    const flat = flatBodies(t);
+    const idEv = flat.find((b) => b.n === 'identify');
+    ok(idEv, 'identify event sent');
+    eq(idEv.id, 'usr_999');
+    eq(idEv.p.role, 'admin');
+
+    // Subsequent events inherit the identified id
+    t.advance(1001);
+    t.sandbox.window.analytics.track('subsequent_action');
+    t.flushQueuedTimers();
+    const subEv = flatBodies(t).find((b) => b.n === 'subsequent_action');
+    ok(subEv, 'subsequent action sent');
+    eq(subEv.id, 'usr_999', 'retains identified distinctId');
+  }),
+
+  test('tracker: data-domains restricts tracking to specified hostnames', () => {
+    const allowed = loadTracker({ 'data-web': 'W', 'data-domains': 'mysite.com, app.mysite.com' }, { hostname: 'app.mysite.com' });
+    allowed.flushQueuedTimers();
+    eq(allowed.calls.length, 1, 'allowed domain tracks');
+
+    const blocked = loadTracker({ 'data-web': 'W', 'data-domains': 'mysite.com, app.mysite.com' }, { hostname: 'staging.other.com' });
+    blocked.flushQueuedTimers();
+    eq(blocked.calls.length, 0, 'non-allowed domain ignored');
+  }),
+
+  test('tracker: custom data-endpoint changes collect path', () => {
+    const t = loadTracker({ 'data-web': 'W', 'data-endpoint': '/api/send' });
+    t.flushQueuedTimers();
+    eq(t.calls.length, 1);
+    ok(t.calls[0].url.endsWith('/api/send'), 'posts to /api/send');
+  }),
 ];
 
 run('Tracker (sandbox, built t.js)', tests);
+

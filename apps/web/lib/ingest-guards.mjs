@@ -603,11 +603,54 @@ export function buildEventParams(raw, site, ctx) {
   };
 }
 
+// ---- Normalize raw events (supports both Analytics compact & Umami schema) ----
+export function normalizeRawEvent(e) {
+  if (!e || typeof e !== 'object') return null;
+
+  // Umami payload format: { type: 'event'|'identify'|'performance', payload: { website, url, ... } }
+  if (e.type && e.payload && typeof e.payload === 'object') {
+    const p = e.payload;
+    let url = p.url || p.u || '/';
+    let query = p.query || p.q || null;
+    if (!query && typeof url === 'string' && url.includes('?')) {
+      const parts = url.split('?');
+      url = parts[0];
+      query = '?' + parts[1];
+    }
+    return {
+      w: p.website || p.websiteId || p.w,
+      n: p.name || (e.type === 'event' && !p.name ? 'pageview' : e.type),
+      u: url,
+      h: p.hostname || p.h || null,
+      q: query,
+      r: p.referrer || p.r || null,
+      t: p.title || p.t || null,
+      s: p.screen || p.s || null,
+      l: p.language || p.l || null,
+      d: p.d != null ? p.d : (p.delta != null ? p.delta : null),
+      p: p.data || p.p || null,
+      tag: p.tag || null,
+      id: p.id || null,
+    };
+  }
+
+  // Analytics standard compact format { w, n, u, h, q, r, t, s, l, d, p }
+  return e;
+}
+
 // ---- Accept either a single event object or a batch array (cap MAX_BATCH).
 // Returns an array of raw events (possibly empty). ----
 export function extractEvents(payload) {
-  if (Array.isArray(payload)) return payload.slice(0, LIMITS.MAX_BATCH).filter((e) => e && typeof e === 'object');
-  if (payload && typeof payload === 'object') return [payload];
+  if (Array.isArray(payload)) {
+    return payload
+      .slice(0, LIMITS.MAX_BATCH)
+      .map(normalizeRawEvent)
+      .filter((e) => e && typeof e === 'object');
+  }
+  if (payload && typeof payload === 'object') {
+    const norm = normalizeRawEvent(payload);
+    return norm ? [norm] : [];
+  }
   return [];
 }
 
@@ -684,8 +727,8 @@ export async function postIngest(supabaseUrl, serviceKey, batchBody, legacyCalls
 
 export const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, x-umami-website-id, x-umami-cache, x-umami-hostname, Authorization, apikey',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -700,8 +743,8 @@ export function getCorsHeaders(request) {
       if (u.protocol === 'http:' || u.protocol === 'https:') {
         return {
           'Access-Control-Allow-Origin': origin,
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, x-umami-website-id, x-umami-cache, x-umami-hostname, Authorization, apikey, *',
           'Access-Control-Allow-Credentials': 'true',
           'Access-Control-Max-Age': '86400',
           Vary: 'Origin',
@@ -723,3 +766,4 @@ export function isLocalhostHost(host) {
     h === '0.0.0.0'
   );
 }
+

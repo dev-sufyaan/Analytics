@@ -139,9 +139,42 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  const snippetCode = website
-    ? `<script defer src="${getCollectOrigin()}/t.js" data-web="${website.id}"></script>`
-    : '';
+  const [snippetTab, setSnippetTab] = useState<'standard' | 'nextjs' | 'umami' | 'events' | 'pixel'>('standard');
+
+  const origin = getCollectOrigin();
+  const standardSnippet = website ? `<script defer src="${origin}/t.js" data-web="${website.id}"></script>` : '';
+  const nextjsProxyConfig = website ? `// next.config.js (or next.config.mjs)
+// 100% Brave Shields & Adblocker Bypass — proxies traffic through your own domain
+module.exports = {
+  async rewrites() {
+    return [
+      { source: '/stats.js', destination: '${origin}/t.js' },
+      { source: '/api/send', destination: '${origin}/c' },
+    ];
+  },
+};
+
+// Then in your layout.tsx / HTML:
+// <script defer src="/stats.js" data-web="${website.id}" data-endpoint="/api/send"></script>` : '';
+  const umamiSnippet = website ? `<script defer src="${origin}/script.js" data-website-id="${website.id}"></script>` : '';
+  const eventsSnippet = `<!-- Declarative HTML Click Tracking (No JS code needed) -->
+<button data-event="signup" data-event-plan="pro">Upgrade Plan</button>
+<a href="/pricing" data-event="view_pricing" data-event-source="hero">See Pricing</a>
+
+<!-- Programmatic JS Tracking (Supports both window.analytics and window.umami) -->
+<script>
+  window.analytics.track('button_click', { plan: 'pro' });
+  // or Umami drop-in syntax:
+  window.umami.track('purchase', { amount: 49 });
+</script>`;
+  const pixelSnippet = website ? `<!-- No-JS Tracking Pixel (for newsletters, emails, or JS-disabled browsers) -->
+<img src="${origin}/p/${website.id}?u=/" alt="" width="1" height="1" style="display:none;" />` : '';
+
+  const activeSnippetCode =
+    snippetTab === 'nextjs' ? nextjsProxyConfig :
+    snippetTab === 'umami' ? umamiSnippet :
+    snippetTab === 'events' ? eventsSnippet :
+    snippetTab === 'pixel' ? pixelSnippet : standardSnippet;
 
   const shareUrl = website ? `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${website.share_token}` : '';
 
@@ -211,16 +244,63 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
           </form>
         </PanelCard>
 
-        <PanelCard eyebrow="INSTALLATION" title="Tracking Code">
+        <PanelCard eyebrow="INSTALLATION" title="Tracking Code & Adblocker Bypass">
           <p className="font-display text-[13px] leading-[20px] text-[#71717a] mb-4">
-            Paste this snippet into the <code className="bg-[#ebebeb] px-1 py-0.5 rounded text-black font-mono text-[11px]">&lt;head&gt;</code> of your site. It&apos;s under 1.5 KB gzipped and sends no cookies.
+            Zero dependencies, no cookies, privacy-first. Choose a deployment method below:
           </p>
-          <CodeEditorMockup code={snippetCode} title="EMBED CODE" />
+
+          <div className="flex flex-wrap gap-1 mb-4 border-b border-[#ebebeb] pb-2">
+            <button
+              type="button"
+              onClick={() => setSnippetTab('standard')}
+              className={`px-2.5 py-1 text-[11px] font-mono uppercase rounded transition-colors ${snippetTab === 'standard' ? 'bg-black text-white' : 'text-[#71717a] hover:text-black'}`}
+            >
+              Standard HTML
+            </button>
+            <button
+              type="button"
+              onClick={() => setSnippetTab('nextjs')}
+              className={`px-2.5 py-1 text-[11px] font-mono uppercase rounded transition-colors ${snippetTab === 'nextjs' ? 'bg-black text-white' : 'text-[#71717a] hover:text-black'}`}
+            >
+              Next.js Proxy (Adblocker Bypass)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSnippetTab('umami')}
+              className={`px-2.5 py-1 text-[11px] font-mono uppercase rounded transition-colors ${snippetTab === 'umami' ? 'bg-black text-white' : 'text-[#71717a] hover:text-black'}`}
+            >
+              Umami Drop-in
+            </button>
+            <button
+              type="button"
+              onClick={() => setSnippetTab('events')}
+              className={`px-2.5 py-1 text-[11px] font-mono uppercase rounded transition-colors ${snippetTab === 'events' ? 'bg-black text-white' : 'text-[#71717a] hover:text-black'}`}
+            >
+              Event Tracking
+            </button>
+            <button
+              type="button"
+              onClick={() => setSnippetTab('pixel')}
+              className={`px-2.5 py-1 text-[11px] font-mono uppercase rounded transition-colors ${snippetTab === 'pixel' ? 'bg-black text-white' : 'text-[#71717a] hover:text-black'}`}
+            >
+              1x1 Pixel (No-JS)
+            </button>
+          </div>
+
+          <CodeEditorMockup
+            code={activeSnippetCode}
+            title={
+              snippetTab === 'nextjs' ? 'NEXT.JS REWRITE PROXY (100% ADBLOCKER BYPASS)' :
+              snippetTab === 'umami' ? 'UMAMI COMPATIBILITY SCRIPT' :
+              snippetTab === 'events' ? 'DECLARATIVE & PROGRAMMATIC EVENTS' :
+              snippetTab === 'pixel' ? 'NO-JS TRACKING PIXEL' : 'STANDARD EMBED CODE'
+            }
+          />
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={async () => {
-                await navigator.clipboard.writeText(snippetCode);
+                await navigator.clipboard.writeText(activeSnippetCode);
                 setToastMsg('Snippet copied');
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#ebebeb] rounded-[4px] font-mono text-[11px] uppercase hover:bg-[#fafafa]"
@@ -248,7 +328,11 @@ export default function SiteSettingsPage({ params }: { params: Promise<{ id: str
               {aiCopied ? 'COPIED' : 'COPY AI PROMPT'}
             </button>
           </div>
-          <p className="font-mono text-[10px] uppercase text-[#999999] mt-2">AI prompt includes your real ID {website?.id.slice(0, 8)}… + framework steps + verification. No hallucinated IDs.</p>
+          <p className="font-mono text-[10px] uppercase text-[#999999] mt-2">
+            {snippetTab === 'nextjs'
+              ? 'Serving via your own domain rewrites completely bypasses Brave Shields, uBlock Origin, and EasyPrivacy blocklists.'
+              : `AI prompt includes your real ID ${website?.id.slice(0, 8)}… + framework steps + verification. No hallucinated IDs.`}
+          </p>
         </PanelCard>
 
         <PanelCard eyebrow="SHARING" title="Public Dashboard">
