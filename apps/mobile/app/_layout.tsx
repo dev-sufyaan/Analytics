@@ -132,16 +132,16 @@ class AppErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
 const errorStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.canvasDark,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     padding: tokens.spacing.xl,
   },
   card: {
-    backgroundColor: tokens.colors.surfaceDarkCard,
+    backgroundColor: '#ffffff',
     borderRadius: tokens.radii.md,
     borderWidth: 1,
-    borderColor: tokens.colors.hairlineDark,
+    borderColor: tokens.colors.hairline,
     padding: tokens.spacing['2xl'],
     alignItems: 'center',
     gap: 12,
@@ -152,12 +152,12 @@ const errorStyles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: tokens.colors.ink,
     letterSpacing: 0.8,
   },
   subtitle: {
     fontSize: 12,
-    color: tokens.colors.textSecondary,
+    color: tokens.colors.body,
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -196,13 +196,13 @@ const errorStyles = StyleSheet.create({
 });
 
 function NavigationGuard({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, sessionReady } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const rootState = useRootNavigationState();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !sessionReady) return; // wait until session is restored
     if (!rootState?.key) return; // navigation not ready yet — prevents blank redirect before router mounted
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -214,7 +214,7 @@ function NavigationGuard({ children }: { children: React.ReactNode }) {
       // User is signed in and on login screen -> redirect to main tabs
       router.replace('/(tabs)');
     }
-  }, [session, loading, segments, router, rootState]);
+  }, [session, loading, sessionReady, segments, router, rootState]);
 
   return <>{children}</>;
 }
@@ -266,13 +266,13 @@ export default function RootLayout() {
               buster: CACHE_BUSTER,
             }}
           >
-            <StatusBar style="light" />
+            <StatusBar style="dark" />
             <OfflineBanner />
             <NavigationGuard>
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  contentStyle: { backgroundColor: tokens.colors.canvasSubtle },
+                  contentStyle: { backgroundColor: '#ffffff' },
                   animation: 'fade',
                 }}
               >
@@ -283,9 +283,9 @@ export default function RootLayout() {
                   name="site/[panel]"
                   options={{
                     headerShown: true,
-                    headerStyle: { backgroundColor: tokens.colors.canvasDark },
-                    headerTintColor: '#ffffff',
-                    headerTitleStyle: { fontWeight: '700', fontSize: 15 },
+                    headerStyle: { backgroundColor: '#ffffff' },
+                    headerTintColor: tokens.colors.ink,
+                    headerTitleStyle: { fontWeight: '700', fontSize: 15, color: tokens.colors.ink },
                     presentation: 'card',
                     animation: 'slide_from_right',
                   }}

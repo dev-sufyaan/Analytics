@@ -402,6 +402,7 @@ export function getSalt(rotation, date) {
   let start;
   if (rotation === 'week') start = startOfWeekUTC(d);
   else if (rotation === 'month') start = startOfMonthUTC(d);
+  else if (rotation === 'hour') start = startOfHourUTC(d);
   else start = startOfDayUTC(d); // 'day' default
   // Umami: hash(start.toUTCString())
   return crypto.createHash('sha512').update(start.toUTCString()).digest('hex');

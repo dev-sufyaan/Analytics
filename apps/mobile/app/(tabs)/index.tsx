@@ -42,6 +42,7 @@ import {
   Monitor,
   Zap,
   Filter,
+  AlertCircle,
 } from 'lucide-react-native';
 
 export default function OverviewScreen() {
@@ -159,7 +160,7 @@ export default function OverviewScreen() {
           }}
           activeOpacity={0.8}
         >
-          <LiveDot size={7} color={tokens.colors.accentMint} />
+          <LiveDot size={7} color="#059669" />
           <View style={styles.siteInfo}>
             <Text style={styles.siteDomain} numberOfLines={1}>
               {activeSite?.name || activeSite?.domain || 'Select Website'}
@@ -179,7 +180,7 @@ export default function OverviewScreen() {
         >
           <RefreshCw
             size={16}
-            color={isRefetching ? tokens.colors.accentMint : '#ffffff'}
+            color={isRefetching ? tokens.colors.accentMintDark : tokens.colors.ink}
           />
         </TouchableOpacity>
       </View>
@@ -216,6 +217,30 @@ export default function OverviewScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Meta row: last updated + retention hint */}
+        {overview?.generated_at && (
+          <Text style={styles.lastUpdatedText}>
+            Updated {new Date(overview.generated_at).toLocaleTimeString()} · Auto-sync 30s · Source: get_dashboard_overview (web parity)
+          </Text>
+        )}
+
+        {activeSite && activeSite.events_this_month >= activeSite.monthly_event_quota * 0.85 && (
+          <View style={styles.quotaWarningCard}>
+            <AlertCircle size={14} color="#dc2626" />
+            <Text style={styles.quotaWarningText}>
+              Quota {Math.round((activeSite.events_this_month / activeSite.monthly_event_quota) * 100)}% used ({activeSite.events_this_month.toLocaleString()}/{activeSite.monthly_event_quota.toLocaleString()}) — resets 1st next month
+            </Text>
+          </View>
+        )}
+
+        {range === '90d' && activeSite && (
+          <View style={styles.retentionHintCard}>
+            <Text style={styles.retentionHintText}>
+              Breakdowns cover last {activeSite.data_retention_days} days · Daily sums kept forever
+            </Text>
+          </View>
+        )}
 
         {!sitesLoading && sites.length === 0 ? (
           <View style={styles.emptySiteCard}>
@@ -608,7 +633,7 @@ export default function OverviewScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: tokens.colors.canvasDark,
+    backgroundColor: '#ffffff',
   },
   topHeader: {
     flexDirection: 'row',
@@ -616,9 +641,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: tokens.spacing.lg,
     paddingVertical: tokens.spacing.md,
-    backgroundColor: tokens.colors.canvasDark,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.surfaceDarkSoft,
+    borderBottomColor: tokens.colors.surfaceSubtle,
   },
   siteSelector: {
     flexDirection: 'row',
@@ -631,20 +656,20 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   siteDomain: {
-    color: '#ffffff',
+    color: tokens.colors.ink,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   siteSub: {
-    color: tokens.colors.bodyDark,
+    color: tokens.colors.body,
     fontSize: 11,
   },
   refreshBtn: {
     width: 36,
     height: 36,
     borderRadius: tokens.radii.xs,
-    backgroundColor: tokens.colors.surfaceDarkSoft,
+    backgroundColor: tokens.colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -807,5 +832,43 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: tokens.colors.body,
     marginTop: 1,
+  },
+  lastUpdatedText: {
+    fontSize: 10.5,
+    color: '#64748b',
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  quotaWarningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  quotaWarningText: {
+    fontSize: 11.5,
+    color: '#991b1b',
+    flex: 1,
+    lineHeight: 16,
+  },
+  retentionHintCard: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  retentionHintText: {
+    fontSize: 11,
+    color: '#64748b',
+    textAlign: 'center',
   },
 });

@@ -1,7 +1,7 @@
 // apps/mobile/app/(tabs)/_layout.tsx
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BarChart3, Radio, Globe, Settings } from 'lucide-react-native';
+import { BarChart3, Radio, Globe, Settings, Zap } from 'lucide-react-native';
 import { tokens } from '../../src/theme/tokens';
 import { View, Platform, StyleSheet } from 'react-native';
 
@@ -62,6 +62,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
               <Radio size={20} color={focused ? tokens.colors.ink : color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: 'Events',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
+              <Zap size={20} color={focused ? tokens.colors.ink : color} />
             </View>
           ),
         }}

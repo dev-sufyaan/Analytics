@@ -61,7 +61,7 @@
     return {
       w: websiteId,
       n: eventName || 'pageview',
-      u: loc.pathname || '/',
+      u: (loc.pathname || '/') + (loc.hash || ''),
       h: loc.hostname || '',
       q: loc.search || null,
       r: document.referrer || null,
@@ -128,10 +128,11 @@
   }
 
   // SPA navigation
-  var currentPath = loc.pathname;
+  var currentPath = (loc.pathname || '/') + (loc.hash || '');
   function handleNavigation() {
-    if (currentPath !== loc.pathname) {
-      currentPath = loc.pathname;
+    var newPath = (loc.pathname || '/') + (loc.hash || '');
+    if (currentPath !== newPath) {
+      currentPath = newPath;
       trackPageview();
     }
   }
@@ -149,6 +150,7 @@
       handleNavigation();
     };
   window.addEventListener('popstate', handleNavigation);
+  window.addEventListener('hashchange', handleNavigation);
 
   // Duration on hide; immediate flush so nothing is lost on unload.
   document.addEventListener('visibilitychange', function () {

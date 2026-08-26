@@ -3,6 +3,8 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import {
   Website,
   DashboardOverview,
+  WebsiteEventStats,
+  RealtimeData,
 } from './types';
 
 export async function getUserWebsites(supabase: SupabaseClient): Promise<Website[]> {
@@ -123,3 +125,46 @@ export async function wipeWebsiteData(
   });
   if (error) throw new Error(error.message);
 }
+
+export async function getWebsiteEventStats(
+  supabase: SupabaseClient,
+  websiteId: string,
+  start: Date,
+  end: Date
+): Promise<WebsiteEventStats> {
+  const { data, error } = await supabase.rpc('get_website_event_stats', {
+    p_website_id: websiteId,
+    p_start: start.toISOString(),
+    p_end: end.toISOString(),
+  });
+
+  if (error) throw overviewError('website event stats', error.message);
+
+  return (
+    (data as WebsiteEventStats) || {
+      events: 0,
+      visitors: 0,
+      visits: 0,
+      unique_events: 0,
+    }
+  );
+}
+
+export async function getRealtimeVisitors(
+  supabase: SupabaseClient,
+  websiteId: string
+): Promise<RealtimeData> {
+  const { data, error } = await supabase.rpc('get_realtime_visitors', {
+    p_website_id: websiteId,
+  });
+
+  if (error) throw overviewError('realtime data', error.message);
+
+  return (
+    (data as RealtimeData) || {
+      active_visitors: 0,
+      active_pages: [],
+    }
+  );
+}
+

@@ -92,8 +92,8 @@ android {
         applicationId 'com.sufyaanstudio.analytics'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (findProperty('versionCode') ? findProperty('versionCode').toInteger() : (findProperty('VERSION_CODE') ? findProperty('VERSION_CODE').toInteger() : 1))
-        versionName (findProperty('versionName') ? findProperty('versionName').toString() : "1.0.0")
+        versionCode 3
+        versionName "1.0.2"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

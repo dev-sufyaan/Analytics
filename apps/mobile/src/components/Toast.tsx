@@ -57,11 +57,11 @@ export function Toast({
 
   const Icon =
     type === 'success' ? (
-      <CheckCircle size={16} color={tokens.colors.accentMint} />
+      <CheckCircle size={16} color="#059669" />
     ) : type === 'error' ? (
       <AlertCircle size={16} color="#ef4444" />
     ) : (
-      <Sparkles size={16} color={tokens.colors.accentMint} />
+      <Sparkles size={16} color="#0891b2" />
     );
 
   return (
@@ -86,24 +86,24 @@ const styles = StyleSheet.create({
     bottom: 34,
     left: 20,
     right: 20,
-    backgroundColor: tokens.colors.canvasDark,
-    borderRadius: tokens.radii.sm,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     borderWidth: 1,
-    borderColor: tokens.colors.hairlineDark,
+    borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     elevation: 6,
     zIndex: 9999,
   },
   text: {
-    color: '#ffffff',
+    color: '#0f172a',
     fontSize: 13,
     fontWeight: '600',
     flex: 1,

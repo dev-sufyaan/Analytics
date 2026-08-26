@@ -196,7 +196,7 @@ const tests = [
     const bodies = latestBodies(ALL);
     const body = bodies['ingest_event'];
     ok(body, 'ingest_event body extracted');
-    ok(/order by created_at desc\s*limit 1[\s\S]{0,200}?v_last_event\.event_name\s+is\s+null/.test(body),
+    ok(/order by created_at desc(?:,\s*id\s+desc)?\s*limit 1[\s\S]{0,200}?v_last_event\.event_name\s+is\s+null/.test(body),
       'dedupe checks last event of ANY type, requires it to be a pageview');
   }),
 

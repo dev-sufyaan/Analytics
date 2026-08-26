@@ -206,6 +206,16 @@ const tests = [
     ok(paths.includes('/back'), 'popstate nav tracked');
   }),
 
+  test('tracker: hash navigation tracked via hashchange', () => {
+    const t = loadTracker({ 'data-web': 'W' });
+    t.flushQueuedTimers();
+    t.sandbox.location.hash = '#section-2';
+    t.dispatchWin('hashchange');
+    t.flushQueuedTimers();
+    const paths = flatBodies(t).map((b) => b.u);
+    ok(paths.includes('/#section-2'), 'hashchange nav tracked');
+  }),
+
   test('tracker: same-path navigation does NOT double count', () => {
     const t = loadTracker({ 'data-web': 'W' });
     t.flushQueuedTimers();

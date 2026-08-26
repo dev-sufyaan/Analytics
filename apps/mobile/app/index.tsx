@@ -13,12 +13,12 @@ export default function RootIndex() {
       <View
         style={{
           flex: 1,
-          backgroundColor: tokens.colors.canvasDark,
+          backgroundColor: '#ffffff',
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color={tokens.colors.accentMint} />
+        <ActivityIndicator size="large" color={tokens.colors.ink} />
       </View>
     );
   }

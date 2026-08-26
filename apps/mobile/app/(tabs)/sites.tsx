@@ -48,7 +48,7 @@ export default function SitesScreen() {
       {/* Top Header */}
       <View style={styles.topHeader}>
         <View style={styles.headerLeft}>
-          <Globe size={18} color={tokens.colors.accentMint} />
+          <Globe size={18} color={tokens.colors.ink} />
           <Text style={styles.headerTitle}>WEBSITES & QUOTAS</Text>
         </View>
         <View style={styles.badgeCount}>
@@ -250,7 +250,7 @@ export default function SitesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: tokens.colors.canvasDark,
+    backgroundColor: '#ffffff',
   },
   topHeader: {
     flexDirection: 'row',
@@ -258,9 +258,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: tokens.spacing.lg,
     paddingVertical: tokens.spacing.md,
-    backgroundColor: tokens.colors.canvasDark,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.surfaceDarkSoft,
+    borderBottomColor: tokens.colors.surfaceSubtle,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -268,19 +268,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    color: '#ffffff',
+    color: tokens.colors.ink,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   badgeCount: {
-    backgroundColor: tokens.colors.surfaceDarkSoft,
+    backgroundColor: tokens.colors.surfaceSubtle,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: tokens.radii.full,
   },
   badgeCountText: {
-    color: tokens.colors.accentMint,
+    color: tokens.colors.accentMintDark,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   codeBox: {
-    backgroundColor: tokens.colors.canvasDark,
+    backgroundColor: '#ffffff',
     borderRadius: tokens.radii.xs,
     padding: tokens.spacing.md,
     marginBottom: tokens.spacing.lg,

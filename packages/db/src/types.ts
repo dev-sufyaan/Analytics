@@ -76,12 +76,20 @@ export interface WebsiteStats {
   pageviews: number;
   visitors: number;
   sessions: number;
+  visits?: number;
   bounces: number;
   bounce_rate: number;
   total_duration_seconds: number;
   avg_duration_seconds: number;
   website_name?: string;
   domain?: string;
+}
+
+export interface WebsiteEventStats {
+  events: number;
+  visitors: number;
+  visits: number;
+  unique_events: number;
 }
 
 export interface TimeseriesPoint {
@@ -152,6 +160,8 @@ export interface TopUtmCampaign {
 export interface RealtimeData {
   active_visitors: number;
   active_pages: { url_path: string; count: number }[];
+  realtime_interval_seconds?: number;
+  generated_at?: string | number;
 }
 
 // --- Combined dashboard overview (single-round-trip payload) ---

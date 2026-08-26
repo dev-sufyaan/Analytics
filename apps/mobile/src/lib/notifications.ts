@@ -15,16 +15,30 @@ Notifications.setNotificationHandler({
   }),
 });
 
+export type PushRegistrationOutcome =
+  | { ok: true; reason: 'granted' }
+  | { ok: true; reason: 'granted_no_token'; warning: string }
+  | { ok: false; reason: 'denied' }
+  | { ok: false; reason: 'error'; warning: string };
+
 /**
- * Sets up Android notification channels and registers device FCM push token with Supabase.
+ * Result of the OS-level permission + device-token flow.
+ *
+ * IMPORTANT — do NOT gate the "Daily digest" UI toggle on the FCM token
+ * being returned. The toggle is the user's *preference* and reflects the
+ * OS-level grant; the FCM token is a best-effort delivery detail. If
+ * `google-services.json` is not configured yet (which is common on a
+ * freshly built APK), `getDevicePushTokenAsync` will throw or return an
+ * empty token — the user has still granted permission and we should keep
+ * their preference ON. The token registration is retried on every cold
+ * start until it succeeds.
  */
-export async function registerForPushNotificationsAsync(
-  userId: string
-): Promise<string | null> {
-  if (Platform.OS !== 'android') return null;
+export async function ensureNotificationPermissionAndChannel(): Promise<PushRegistrationOutcome> {
+  if (Platform.OS !== 'android') {
+    return { ok: true, reason: 'granted' };
+  }
 
   try {
-    // 1. Configure Android Notification Channels
     await Notifications.setNotificationChannelAsync('daily_digest', {
       name: 'Daily Analytics Digest',
       importance: Notifications.AndroidImportance.HIGH,
@@ -32,38 +46,91 @@ export async function registerForPushNotificationsAsync(
       lightColor: '#c8f6f9',
       sound: 'default',
     });
+  } catch (warn) {
+    // Channel creation is best-effort.
+  }
 
-    // 2. Request Permissions
-    const existingStatus = (await Notifications.getPermissionsAsync()) as {
+  // Check current permission state without prompting.
+  const existing = (await Notifications.getPermissionsAsync()) as {
+    granted?: boolean;
+    status?: string;
+    ios?: { status: number };
+    android?: { status: number };
+  };
+  const platform: string = Platform.OS;
+  const isGranted =
+    existing?.granted === true ||
+    existing?.status === 'granted' ||
+    (platform === 'ios' && existing?.ios?.status === 2) ||
+    (platform === 'android' && existing?.android?.status === 1);
+
+  if (!isGranted) {
+    // One-shot OS prompt. We never re-prompt on subsequent toggles — once
+    // the user has answered, the OS handles the rest (Settings deep link).
+    const requested = (await Notifications.requestPermissionsAsync()) as {
       granted?: boolean;
       status?: string;
+      ios?: { status: number };
+      android?: { status: number };
     };
-    let isGranted = existingStatus?.granted || existingStatus?.status === 'granted';
-
-    if (!isGranted) {
-      const requested = (await Notifications.requestPermissionsAsync()) as {
-        granted?: boolean;
-        status?: string;
-      };
-      isGranted = requested?.granted || requested?.status === 'granted';
+    const afterRequest =
+      requested?.granted === true ||
+      requested?.status === 'granted' ||
+      (platform === 'ios' && requested?.ios?.status === 2) ||
+      (platform === 'android' && requested?.android?.status === 1);
+    if (!afterRequest) {
+      return { ok: false, reason: 'denied' };
     }
+  }
 
-    if (!isGranted) {
-      return null;
-    }
-
-    // 3. Get Device Push Token (FCM v1 compatible token)
+  // Permission is granted. Now try to obtain the FCM token. This is the
+  // step that requires `google-services.json` to be present in the APK
+  // build; without it `getDevicePushTokenAsync` will throw. We catch
+  // that case and report it as a soft warning so the UI keeps the toggle
+  // ON — the user has done their part by granting permission.
+  let fcmToken: string | null = null;
+  try {
     const tokenData = await Notifications.getDevicePushTokenAsync();
-    const fcmToken = tokenData.data;
+    fcmToken = (tokenData as { data?: string } | undefined)?.data ?? null;
+  } catch (err) {
+    return {
+      ok: true,
+      reason: 'granted_no_token',
+      warning:
+        'Permission granted — push delivery will activate once Firebase is configured in the APK build.',
+    };
+  }
 
+  if (!fcmToken) {
+    return {
+      ok: true,
+      reason: 'granted_no_token',
+      warning:
+        'Permission granted — push delivery will activate once Firebase is configured in the APK build.',
+    };
+  }
+
+  return { ok: true, reason: 'granted' };
+}
+
+/**
+ * Registers device FCM push token with Supabase. Idempotent — safe to
+ * re-run on every cold start. Returns the token on success or null on
+ * any failure (caller must not treat null as "user denied permission";
+ * use ensureNotificationPermissionAndChannel for that distinction).
+ */
+export async function registerForPushNotificationsAsync(
+  userId: string
+): Promise<string | null> {
+  try {
+    const tokenData = await Notifications.getDevicePushTokenAsync();
+    const fcmToken = (tokenData as { data?: string } | undefined)?.data ?? null;
     if (!fcmToken) return null;
 
-    // 4. Unique Device Identifier
     const deviceId =
       Application.getAndroidId?.() ||
       `device_${userId.slice(0, 8)}`;
 
-    // 5. Register in Supabase database
     const { error } = await supabase.from('push_tokens').upsert(
       {
         user_id: userId,
