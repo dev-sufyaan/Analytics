@@ -178,8 +178,9 @@ export default async function FeatureDetailPage({
             {data.slug === 'android-app' ? (
               <>
                 <a
-                  href="/analytics-latest.apk"
-                  download="analytics-latest.apk"
+                  href="https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-6 py-3 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] uppercase font-bold rounded-[4px] hover:bg-[#b0f0f4] transition-colors"
                 >
                   Download APK (76.0 MB)

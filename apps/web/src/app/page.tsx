@@ -383,8 +383,9 @@ window.analytics.track('checkout_completed', {
               {/* Action Buttons */}
               <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                 <a
-                  href="/download/analytics-latest.apk"
-                  download="analytics-latest.apk"
+                  href="https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold uppercase rounded-[4px] hover:bg-[#b0f0f4] active:scale-[0.99] transition-all shadow-md cursor-pointer"
                 >
                   <Download className="w-4 h-4" />

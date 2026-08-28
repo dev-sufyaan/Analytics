@@ -59,10 +59,12 @@ export const SITE_CONFIG = {
     fileSize: '76.0 MB',
     fileSizeBytes: 79653307,
     sha256: 'aef10c9f8be64ffb54df526f0e4e45350a9f504fcb4d2a511a36dfde58ada839',
-    // Simple direct static asset — no R2/proxy. File lives at public/download/analytics-latest.apk
-    downloadPath: '/download/analytics-latest.apk',
-    directApkPath: '/download/analytics-latest.apk',
-    absoluteDownloadUrl: `${BASE_URL}/download/analytics-latest.apk`,
+    // Direct GitHub Release — reliable on both desktop & mobile (no Worker streaming).
+    // Route /download/analytics-latest.apk kept for backward compat (in-app updater fallback).
+    githubReleaseUrl: 'https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk',
+    downloadPath: 'https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk',
+    directApkPath: 'https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk',
+    absoluteDownloadUrl: 'https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk',
     downloadPageUrl: `${BASE_URL}/download`,
     releaseDate: '2026-08-28',
   },

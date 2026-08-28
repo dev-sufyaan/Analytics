@@ -250,20 +250,19 @@ export default {
             });
           }
         }
-        // Fallback default manifest — points to Collect R2 direct for mobile updater (single hop)
-        // Browser download page uses same-origin /download/... via SITE_CONFIG; this fallback is for in-app updater
+        // Fallback manifest — direct GitHub Release (reliable on mobile, no Worker streaming)
         return new Response(
           JSON.stringify({
             version: '2.1.0',
             versionCode: 5,
             minSupportedVersionCode: 1,
             downloadUrl:
-              'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
+              'https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk',
             // also provide apkUrl for mobile updater compatibility
-            apkUrl: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
-            releaseNotes: 'V2.1 — Correctly padded launcher icon (no clipping) + same direct R2 download reliability improvements.',
-            changelog: 'V2.1 — Perfectly centered app icon with 22% safe padding, Collect R2 direct streaming (no GitHub), same-origin download fix.',
-            fileSize: '76.3 MB',
+            apkUrl: 'https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk',
+            releaseNotes: 'V2.1 — GitHub Release direct download (fixes mobile download manager).',
+            changelog: 'V2.1 — GitHub Release direct APK — no Worker proxy, fixes Android download.',
+            fileSize: '76.0 MB',
           }),
           {
             headers: {

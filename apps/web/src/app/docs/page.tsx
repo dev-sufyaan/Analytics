@@ -971,8 +971,9 @@ Content-Security-Policy: script-src 'self' https://yourdomain.com; connect-src '
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a
-                      href="/analytics-latest.apk"
-                      download="analytics-latest.apk"
+                      href="https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="px-5 py-3 bg-[#c8f6f9] text-[#010120] font-mono text-[12px] uppercase font-bold rounded-[4px] hover:bg-[#b0f0f4] transition-colors inline-flex items-center gap-2"
                     >
                       <span>Download APK</span>
@@ -987,15 +988,15 @@ Content-Security-Policy: script-src 'self' https://yourdomain.com; connect-src '
                 </div>
 
                 <CodeEditorMockup
-                  code={`# 1. Download official APK
-curl -O https://analytics.sufyaan.studio/analytics-latest.apk
+                  code={`# 1. Download official APK (GitHub Release — direct, mobile-safe)
+curl -L -o Analytics-v2.0.0.apk https://github.com/dev-sufyaan/Analytics/releases/download/v2.1.0/Analytics-v2.0.0.apk
 
 # 2. Verify SHA-256 Checksum
-sha256sum analytics-latest.apk
-# Expected: 1e188e8b993b2507d0d6baa7ee89f68552e301b59a8057a604c585df74f88fe6
+sha256sum Analytics-v2.0.0.apk
+# Expected: aef10c9f8be64ffb54df526f0e4e45350a9f504fcb4d2a511a36dfde58ada839
 
 # 3. Optional: Install via ADB directly to a connected device
-adb install -r analytics-latest.apk`}
+adb install -r Analytics-v2.0.0.apk`}
                   title="CLI DOWNLOAD &amp; SHA-256 VERIFICATION"
                 />
 

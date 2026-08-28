@@ -36,7 +36,10 @@ export function DownloadClient() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const sha256Checksum = SITE_CONFIG.androidApp.sha256;
-  const apkDownloadUrl = SITE_CONFIG.androidApp.directApkPath;
+  // GitHub Release direct URL — works reliably on mobile download managers (no Worker streaming).
+  const apkDownloadUrl =
+    (SITE_CONFIG.androidApp as unknown as { githubReleaseUrl: string }).githubReleaseUrl ||
+    SITE_CONFIG.androidApp.directApkPath;
 
   const handleCopyChecksum = () => {
     navigator.clipboard.writeText(sha256Checksum);
@@ -44,8 +47,8 @@ export function DownloadClient() {
     setTimeout(() => setCopiedSha(false), 2500);
   };
 
-  // Simple direct download — APK is now a static asset at /download/analytics-latest.apk (no R2/proxy).
-  // Native <a download> handles the binary streaming directly via Cloudflare ASSETS.
+  // Direct GitHub download — plain anchor navigation. No `download` attr (cross-origin ignored on mobile
+  // and can break Android download manager). GitHub sends Content-Disposition: attachment.
   const handleDownloadClick = () => {
     setDownloadError(null);
     setIsDownloading(true);
@@ -150,7 +153,8 @@ export function DownloadClient() {
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                 <a
                   href={apkDownloadUrl}
-                  download="analytics-latest.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={handleDownloadClick}
                   aria-busy={isDownloading}
                   className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold tracking-wider uppercase rounded-[4px] hover:bg-[#b0f0f4] active:scale-[0.99] transition-all shadow-lg cursor-pointer disabled:opacity-60"
@@ -497,7 +501,8 @@ export function DownloadClient() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
               href={apkDownloadUrl}
-              download="analytics-latest.apk"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={handleDownloadClick}
               className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold uppercase rounded-[4px] hover:bg-[#b0f0f4] transition-colors"
             >
