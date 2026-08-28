@@ -182,7 +182,7 @@ export default async function FeatureDetailPage({
                   download="analytics-latest.apk"
                   className="px-6 py-3 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] uppercase font-bold rounded-[4px] hover:bg-[#b0f0f4] transition-colors"
                 >
-                  Download APK (76.3 MB)
+                  Download APK (76.0 MB)
                 </a>
                 <Link
                   href="/download"

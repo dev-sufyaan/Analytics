@@ -18,6 +18,12 @@
       "id": "6bacb5c306ba4ffdaae42035296a1f64"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "RELEASES_BUCKET",
+      "bucket_name": "analytics-releases"
+    }
+  ],
   "vars": {
     "SUPABASE_URL": "https://ejpuhqvhlxehusmmjscy.supabase.co",
     "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqcHVocXZobHhlaHVzbW1qc2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzA1NjQ0MiwiZXhwIjoyMTAyNjMyNDQyfQ.yjrqIRMreudjivFv5P02jefcDq8quj5TieSldEIyRaA"

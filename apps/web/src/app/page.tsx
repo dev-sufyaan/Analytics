@@ -128,7 +128,7 @@ window.analytics.track('checkout_completed', {
     },
     {
       q: 'Is there a native mobile app for Android?',
-      a: 'Yes! Our official native Android app (v2.0.0) is available as a direct universal APK download on our website at /download. It features 60fps native charts, sub-50ms cold start, persistent offline caching, biometric Keystore encryption, and an in-app self-updater with zero Google Play store telemetry.',
+      a: 'Yes! Our official native Android app (v2.1.0) is available as a direct universal APK download on our website at /download. It features 60fps native charts, sub-50ms cold start, persistent offline caching, biometric Keystore encryption, and an in-app self-updater with zero Google Play store telemetry.',
     },
     {
       q: 'Why is the Android app distributed as a direct APK instead of Google Play?',
@@ -153,7 +153,7 @@ window.analytics.track('checkout_completed', {
                 className="inline-flex items-center gap-1.5 bg-[#c8f6f9] text-[#010120] px-3 py-1 rounded-[4px] font-mono text-[11px] font-bold hover:bg-[#b0f0f4] transition-colors"
               >
                 <Smartphone className="w-3.5 h-3.5" />
-                <span>NEW: ANDROID APP v2.0 RELEASED →</span>
+                <span>NEW: ANDROID APP v2.1 RELEASED →</span>
               </Link>
               <div className="inline-flex items-center gap-2 bg-[#26263a] px-3 py-1 rounded-[4px]">
                 <LiveDot />
@@ -345,7 +345,7 @@ window.analytics.track('checkout_completed', {
                   </span>
                 </div>
                 <span className="px-2.5 py-1 rounded-[4px] bg-white text-black font-mono text-[11px] font-bold">
-                  v2.0.0 APK
+                  v2.1.0 APK
                 </span>
               </div>
 
@@ -383,12 +383,12 @@ window.analytics.track('checkout_completed', {
               {/* Action Buttons */}
               <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                 <a
-                  href="https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk"
+                  href="/download/analytics-latest.apk"
                   download="analytics-latest.apk"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold uppercase rounded-[4px] hover:bg-[#b0f0f4] active:scale-[0.99] transition-all shadow-md cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  <span>DOWNLOAD APK (76.3 MB)</span>
+                  <span>DOWNLOAD APK (76.0 MB)</span>
                 </a>
 
 

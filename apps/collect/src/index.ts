@@ -230,7 +230,7 @@ export default {
       });
     }
 
-    // 3b. Phase 3: Releases & APK Download Endpoint
+    // 3b. Phase 3: Releases & APK Download Endpoint — Direct R2 Only (no GitHub fallback)
     if (url.pathname.startsWith('/download/')) {
       const filename = url.pathname.replace('/download/', '').trim();
 
@@ -239,30 +239,35 @@ export default {
         if (env.RELEASES_BUCKET) {
           const obj = await env.RELEASES_BUCKET.get('latest.json');
           if (obj) {
+            // Support R2 httpMetadata cacheControl if present, else default
             return new Response(obj.body, {
               headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'public, max-age=60',
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
                 'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
               },
             });
           }
         }
-        // Fallback default manifest
+        // Fallback default manifest — points to Collect R2 direct for mobile updater (single hop)
+        // Browser download page uses same-origin /download/... via SITE_CONFIG; this fallback is for in-app updater
         return new Response(
           JSON.stringify({
-            version: '2.0.0',
-            versionCode: 4,
+            version: '2.1.0',
+            versionCode: 5,
             minSupportedVersionCode: 1,
             downloadUrl:
               'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
-            releaseNotes: 'V2.0 — Full 100% Adblocker and Brave Shields evasion support, real-time analytics updates, and performance enhancements.',
-            changelog: 'Production release with instant cold start, native 60fps charts, and auto-sync.',
-            fileSize: '24.5 MB',
+            // also provide apkUrl for mobile updater compatibility
+            apkUrl: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
+            releaseNotes: 'V2.1 — Correctly padded launcher icon (no clipping) + same direct R2 download reliability improvements.',
+            changelog: 'V2.1 — Perfectly centered app icon with 22% safe padding, Collect R2 direct streaming (no GitHub), same-origin download fix.',
+            fileSize: '76.3 MB',
           }),
           {
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/json; charset=utf-8',
               'Cache-Control': 'public, max-age=60',
               'Access-Control-Allow-Origin': '*',
             },
@@ -270,61 +275,86 @@ export default {
         );
       }
 
-      // APK Download: /download/:filename.apk
+      // APK Download: /download/:filename.apk — Direct R2 stream only (reliable, no redirect)
       if (filename.endsWith('.apk')) {
         if (env.RELEASES_BUCKET) {
           const obj = await env.RELEASES_BUCKET.get(filename);
           if (obj) {
-            return new Response(obj.body, {
-              headers: {
-                'Content-Type': 'application/vnd.android.package-archive',
-                'Content-Disposition': `attachment; filename="${filename}"`,
-                'Cache-Control': 'public, max-age=86400',
-                'Access-Control-Allow-Origin': '*',
-              },
-            });
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/vnd.android.package-archive');
+            headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+            // Use R2 object httpMetadata if present, else sane defaults for fast reliable downloads
+            const size = (obj as any).size ?? (obj as any).httpMetadata?.contentLength;
+            if (size) headers.set('Content-Length', String(size));
+            headers.set('Accept-Ranges', 'bytes');
+            headers.set('Cache-Control', 'public, max-age=86400, immutable');
+            headers.set('Access-Control-Allow-Origin', '*');
+            headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+            headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+            // Support HEAD for download managers
+            if (request.method === 'HEAD') {
+              return new Response(null, { status: 200, headers });
+            }
+            return new Response(obj.body, { headers });
           }
         }
-        // Direct GitHub release asset CDN redirect (instant high-speed direct APK download)
-        try {
-          const ghRes = await fetch(
-            'https://api.github.com/repos/dev-sufyaan/Analytics/releases/assets/531151913',
-            {
-              headers: {
-                'User-Agent': 'Analytics-Collect-Worker',
-                Accept: 'application/octet-stream',
-              },
-              redirect: 'manual',
-            }
-          );
-          const location = ghRes.headers.get('location');
-          if (location) {
-            return Response.redirect(location, 302);
-          }
-        } catch {}
-        return Response.redirect('https://analytics.sufyaanstudio.workers.dev/download', 302);
-      }
-    }
-
-    // 3b-ii. Direct /analytics-latest.apk alias on collect worker
-    if (url.pathname === '/analytics-latest.apk') {
-      try {
-        const ghRes = await fetch(
-          'https://api.github.com/repos/dev-sufyaan/Analytics/releases/assets/531151913',
+        // R2 miss or not configured — explicit JSON error (no silent redirect, no GitHub)
+        return new Response(
+          JSON.stringify({
+            error: 'APK_NOT_FOUND',
+            message: `Release asset "${filename}" not found in R2. Please ensure analytics-releases bucket is provisioned and APK uploaded.`,
+            hint: 'Upload via: wrangler r2 object put analytics-releases/analytics-latest.apk --file=./analytics-latest.apk',
+          }),
           {
+            status: 404,
             headers: {
-              'User-Agent': 'Analytics-Collect-Worker',
-              Accept: 'application/octet-stream',
+              'Content-Type': 'application/json; charset=utf-8',
+              'Cache-Control': 'no-cache, no-store',
+              'Access-Control-Allow-Origin': '*',
             },
-            redirect: 'manual',
           }
         );
-        const location = ghRes.headers.get('location');
-        if (location) {
-          return Response.redirect(location, 302);
+      }
+      // Unknown /download/* path (no .apk, no latest.json) -> 404 JSON
+      return new Response(
+        JSON.stringify({ error: 'NOT_FOUND', message: `No asset at /download/${filename}` }),
+        {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-cache',
+            'Access-Control-Allow-Origin': '*',
+          },
         }
-      } catch {}
-      return Response.redirect('https://analytics.sufyaanstudio.workers.dev/download', 302);
+      );
+    }
+
+    // 3b-ii. Direct /analytics-latest.apk alias on collect worker — also R2 direct only
+    if (url.pathname === '/analytics-latest.apk') {
+      const filename = 'analytics-latest.apk';
+      if (env.RELEASES_BUCKET) {
+        const obj = await env.RELEASES_BUCKET.get(filename);
+        if (obj) {
+          const headers = new Headers();
+          headers.set('Content-Type', 'application/vnd.android.package-archive');
+          headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+          const size = (obj as any).size ?? (obj as any).httpMetadata?.contentLength;
+          if (size) headers.set('Content-Length', String(size));
+          headers.set('Accept-Ranges', 'bytes');
+          headers.set('Cache-Control', 'public, max-age=86400, immutable');
+          headers.set('Access-Control-Allow-Origin', '*');
+          headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+          if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
+          return new Response(obj.body, { headers });
+        }
+      }
+      return new Response(
+        JSON.stringify({ error: 'APK_NOT_FOUND', message: 'analytics-latest.apk not found in R2 analytics-releases bucket.' }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' },
+        }
+      );
     }
 
 

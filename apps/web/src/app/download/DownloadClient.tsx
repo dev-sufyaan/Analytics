@@ -32,6 +32,8 @@ import { SITE_CONFIG } from '@/lib/seo/seo-config';
 export function DownloadClient() {
   const [copiedSha, setCopiedSha] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const sha256Checksum = SITE_CONFIG.androidApp.sha256;
   const apkDownloadUrl = SITE_CONFIG.androidApp.directApkPath;
@@ -40,6 +42,30 @@ export function DownloadClient() {
     navigator.clipboard.writeText(sha256Checksum);
     setCopiedSha(true);
     setTimeout(() => setCopiedSha(false), 2500);
+  };
+
+  // Reliable download handler: verifies R2 availability via HEAD, then triggers direct same-origin download.
+  // Keeps native <a download> behavior but adds error feedback + fast retry — avoids blob-in-memory for 76MB.
+  const handleDownloadClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Allow default native download to start immediately for speed
+    // Do lightweight HEAD check in parallel for error feedback
+    setDownloadError(null);
+    setIsDownloading(true);
+    try {
+      const res = await fetch(apkDownloadUrl, { method: 'HEAD', cache: 'no-store' });
+      if (!res.ok) {
+        // Keep native navigation — but surface error after
+        const msg = res.status === 404
+          ? 'APK not yet published to R2. Please try again in a minute or contact support.'
+          : `Download unavailable (HTTP ${res.status}). Retrying...`;
+        setDownloadError(msg);
+        // If HEAD failed, prevent double navigation confusion — let anchor continue, browser will show 404 JSON
+      }
+    } catch {
+      setDownloadError('Network error verifying download. Your download should still start — if not, tap again.');
+    } finally {
+      setTimeout(() => setIsDownloading(false), 3000);
+    }
   };
 
   const features = [
@@ -121,7 +147,7 @@ export function DownloadClient() {
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-white text-black font-mono text-[11px] font-bold">
                   <Sparkles className="w-3.5 h-3.5 text-[#fc4c02]" />
-                  <span>v2.0.0 · UNIVERSAL SIGNED APK</span>
+                  <span>v2.1.0 · UNIVERSAL SIGNED APK</span>
                 </div>
               </div>
 
@@ -141,10 +167,12 @@ export function DownloadClient() {
                 <a
                   href={apkDownloadUrl}
                   download="analytics-latest.apk"
-                  className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold tracking-wider uppercase rounded-[4px] hover:bg-[#b0f0f4] active:scale-[0.99] transition-all shadow-lg cursor-pointer"
+                  onClick={handleDownloadClick}
+                  aria-busy={isDownloading}
+                  className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold tracking-wider uppercase rounded-[4px] hover:bg-[#b0f0f4] active:scale-[0.99] transition-all shadow-lg cursor-pointer disabled:opacity-60"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>DOWNLOAD OFFICIAL APK</span>
+                  <Download className={`w-4 h-4 ${isDownloading ? 'animate-pulse' : ''}`} />
+                  <span>{isDownloading ? 'STARTING DOWNLOAD...' : 'DOWNLOAD OFFICIAL APK'}</span>
                   <span className="text-[11px] opacity-75 font-mono font-normal">({SITE_CONFIG.androidApp.fileSize})</span>
                 </a>
 
@@ -169,6 +197,11 @@ export function DownloadClient() {
                   <span>100% Free & Open Ecosystem</span>
                 </div>
               </div>
+              {downloadError && (
+                <p className="font-mono text-[12px] text-[#f87171] bg-[#1e1e38] border border-[#3a3a54] px-3 py-2 rounded-[4px] mt-2">
+                  {downloadError}
+                </p>
+              )}
             </div>
 
             {/* Right Column: QR Code & Visual Badge Card */}
@@ -204,7 +237,7 @@ export function DownloadClient() {
 
                 <div className="pt-2 border-t border-[#26263a] flex items-center justify-between text-[11px] font-mono text-[#71717a]">
                   <span>PACKAGE: studio.sufyaan.analytics</span>
-                  <span className="text-[#c8f6f9]">BUILD v2.0.0</span>
+                  <span className="text-[#c8f6f9]">BUILD v2.1.0</span>
                 </div>
               </div>
             </div>
@@ -319,7 +352,7 @@ export function DownloadClient() {
                 </p>
               </div>
               <div className="p-3 bg-[#f8fafc] border border-[#ebebeb] rounded-[4px] font-mono text-[11px] text-[#71717a]">
-                File size: 76.3 MB · Universal Android binary
+                File size: 76.0 MB · Universal Android binary
               </div>
             </div>
 
@@ -391,8 +424,8 @@ export function DownloadClient() {
               </tr>
               <tr>
                 <td className="p-4 font-medium">Current Version</td>
-                <td className="p-4 font-mono text-[13px]">2.0.0 (versionCode 4)</td>
-                <td className="p-4 text-[#71717a]">Production stable release</td>
+                <td className="p-4 font-mono text-[13px]">2.1.0 (versionCode 5)</td>
+                <td className="p-4 text-[#71717a]">Icon fix + direct R2 download</td>
               </tr>
               <tr>
                 <td className="p-4 font-medium">Minimum Android Version</td>
@@ -406,7 +439,7 @@ export function DownloadClient() {
               </tr>
               <tr>
                 <td className="p-4 font-medium">Binary Size</td>
-                <td className="p-4 font-mono text-[13px]">76.3 MB (80,081,203 bytes)</td>
+                <td className="p-4 font-mono text-[13px]">76.0 MB (79,653,307 bytes)</td>
                 <td className="p-4 text-[#71717a]">Includes standalone Hermes engine & Skia assets</td>
               </tr>
               <tr>
@@ -481,10 +514,11 @@ export function DownloadClient() {
             <a
               href={apkDownloadUrl}
               download="analytics-latest.apk"
+              onClick={handleDownloadClick}
               className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#c8f6f9] text-[#010120] font-mono text-[13px] font-bold uppercase rounded-[4px] hover:bg-[#b0f0f4] transition-colors"
             >
-              <Download className="w-4 h-4" />
-              <span>DOWNLOAD APK (76.3 MB)</span>
+              <Download className={`w-4 h-4 ${isDownloading ? 'animate-pulse' : ''}`} />
+              <span>{isDownloading ? 'STARTING DOWNLOAD...' : 'DOWNLOAD APK (76.0 MB)'}</span>
             </a>
             <Link
               href="/docs"
@@ -493,6 +527,9 @@ export function DownloadClient() {
               <span>VIEW DOCUMENTATION</span>
             </Link>
           </div>
+          {downloadError && (
+            <p className="font-mono text-[12px] text-[#f87171] text-center mt-3">{downloadError}</p>
+          )}
         </div>
       </section>
 

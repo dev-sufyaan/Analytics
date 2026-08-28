@@ -66,6 +66,10 @@ export function getSoftwareApplicationSchema() {
 }
 
 export function getMobileApplicationSchema() {
+  // SITE_CONFIG.androidApp.downloadPath is now same-origin "/download/..." (Option A: Collect R2 via rewrite)
+  // Guard against double-prefix if legacy absolute URL slips in.
+  const apkPath = SITE_CONFIG.androidApp.downloadPath;
+  const absoluteApkUrl = apkPath.startsWith('http') ? apkPath : `${SITE_CONFIG.baseUrl}${apkPath.startsWith('/') ? apkPath : `/${apkPath}`}`;
   return {
     '@context': 'https://schema.org',
     '@type': 'MobileApplication',
@@ -76,7 +80,7 @@ export function getMobileApplicationSchema() {
     softwareVersion: SITE_CONFIG.androidApp.version,
     fileSize: SITE_CONFIG.androidApp.fileSize,
     fileFormat: 'application/vnd.android.package-archive',
-    downloadUrl: `${SITE_CONFIG.baseUrl}${SITE_CONFIG.androidApp.downloadPath}`,
+    downloadUrl: absoluteApkUrl,
     installUrl: `${SITE_CONFIG.baseUrl}/download`,
     image: `${SITE_CONFIG.baseUrl}/logo.png`,
     screenshot: `${SITE_CONFIG.baseUrl}/opengraph-image`,

@@ -43,7 +43,7 @@ export function generateLlmsTxt(): string {
 - [OpenAPI 3.1.0 Specification (YAML)](${SITE_CONFIG.baseUrl}/openapi.yaml): OpenAPI specification in YAML format.
 - [Model Context Protocol (MCP) Manifest](${SITE_CONFIG.baseUrl}/mcp.json): Official tool and resource definition for AI agents (Cursor, Claude, OpenAI).
 - [Documentation Index](${SITE_CONFIG.baseUrl}/docs): Developer quick-start, API guide, and tracking snippet reference.
-- [Android App Download Page](${SITE_CONFIG.baseUrl}/download): Official direct APK release (v2.0.0, 60fps native charts, cold start < 50ms, SHA-256 binary integrity).
+- [Android App Download Page](${SITE_CONFIG.baseUrl}/download): Official direct APK release (v2.1.0, 60fps native charts, cold start < 50ms, SHA-256 binary integrity).
 - [Cloudflare Workers Integration](${SITE_CONFIG.baseUrl}/integrations/cloudflare-workers): Edge server-side tracking, HTMLRewriter script injection, and subrequests.
 - [XML Sitemap](${SITE_CONFIG.baseUrl}/sitemap.xml): Full machine-readable site index with lastmod timestamps.
 - [Security Disclosure](${SITE_CONFIG.baseUrl}/.well-known/security.txt): Responsible vulnerability disclosure guidelines.
@@ -51,7 +51,7 @@ export function generateLlmsTxt(): string {
 ## Core Navigation
 
 - [Homepage](${SITE_CONFIG.baseUrl}): Privacy-first website analytics overview, live metrics, and feature breakdown.
-- [Download Android App](${SITE_CONFIG.baseUrl}/download): Universal signed APK (v2.0.0, 76.3 MB) with deterministic build hash and QR code scanner.
+- [Download Android App](${SITE_CONFIG.baseUrl}/download): Universal signed APK (v2.1.0, 76.0 MB) with deterministic build hash and QR code scanner.
 - [Pricing](${SITE_CONFIG.baseUrl}/pricing): Free Community ($0) and Pro Scale ($9) tier details.
 - [Design System](${SITE_CONFIG.baseUrl}/design): Interactive design tokens, typography, and component showcase.
 - [Privacy Pillar](${SITE_CONFIG.baseUrl}/privacy-first-analytics): Deep-dive guide to cookie-free analytics and GDPR compliance.
@@ -89,7 +89,7 @@ ${toolLinks}
 - **Database Backend**: PostgreSQL managed via Supabase with strict Row Level Security (RLS).
 - **Client API**: window.analytics.track(eventName, properties).
 - **Android Mobile App**: React Native (Expo 54), Hermes JS Engine, Hardware Keystore encryption, < 50ms cold start, 60fps native charts, offline SWR cache, and foreground auto-sync.
-- **Android App Distribution**: Direct universal signed APK (v2.0.0, SHA-256: 1e188e8b993b2507d0d6baa7ee89f68552e301b59a8057a604c585df74f88fe6) available exclusively at ${SITE_CONFIG.baseUrl}/download to ensure zero third-party store telemetry.
+- **Android App Distribution**: Direct universal signed APK (v2.1.0, SHA-256: aef10c9f8be64ffb54df526f0e4e45350a9f504fcb4d2a511a36dfde58ada839) available exclusively at ${SITE_CONFIG.baseUrl}/download to ensure zero third-party store telemetry.
 
 ## Contact & Links
 

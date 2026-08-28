@@ -53,16 +53,20 @@ export const SITE_CONFIG = {
     linkedin: 'https://www.linkedin.com/company/sufyaanstudio',
   },
   androidApp: {
-    version: '2.0.0',
-    versionCode: 4,
+    version: '2.1.0',
+    versionCode: 5,
     minAndroidVersion: 'Android 10 (API level 29)',
-    fileSize: '76.3 MB',
-    fileSizeBytes: 80081203,
-    sha256: '1e188e8b993b2507d0d6baa7ee89f68552e301b59a8057a604c585df74f88fe6',
-    downloadPath: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
-    directApkPath: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
+    fileSize: '76.0 MB',
+    fileSizeBytes: 79653307,
+    sha256: 'aef10c9f8be64ffb54df526f0e4e45350a9f504fcb4d2a511a36dfde58ada839',
+    // Same-origin path via Next.js rewrite to Collect R2 (reliable, allows download attribute, no CORS issues)
+    // Previous value was absolute https://analytics-collect... — caused cross-origin download attribute ignored bug
+    downloadPath: '/download/analytics-latest.apk',
+    directApkPath: '/download/analytics-latest.apk',
+    // Absolute fallback for external contexts (e.g., updater manifest when needed)
+    absoluteDownloadUrl: `${BASE_URL}/download/analytics-latest.apk`,
     downloadPageUrl: `${BASE_URL}/download`,
-    releaseDate: '2026-08-26',
+    releaseDate: '2026-08-28',
   },
 
   logoUrl: `${BASE_URL}/logo.png`,

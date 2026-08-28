@@ -946,7 +946,7 @@ Content-Security-Policy: script-src 'self' https://yourdomain.com; connect-src '
                   10 // NATIVE ANDROID MOBILE APP
                 </span>
                 <span className="bg-[#c8f6f9] text-[#010120] font-mono text-[10px] px-2 py-0.5 rounded font-bold uppercase">
-                  v2.0.0 APK
+                  v2.1.0 APK
                 </span>
               </div>
               <h2 className="font-display text-[28px] md:text-[34px] font-medium tracking-[-0.6px] text-black mb-4">
@@ -963,7 +963,7 @@ Content-Security-Policy: script-src 'self' https://yourdomain.com; connect-src '
                       OFFICIAL DIRECT DISTRIBUTION
                     </span>
                     <h3 className="font-display text-[20px] font-medium">
-                      Download Analytics v2.0.0 APK (76.3 MB)
+                      Download Analytics v2.1.0 APK (76.0 MB)
                     </h3>
                     <p className="font-display text-[13px] text-[#999999] max-w-md">
                       Universal signed APK for Android 10 through 15. Distributed exclusively via our official website to eliminate Google Play store telemetry.
