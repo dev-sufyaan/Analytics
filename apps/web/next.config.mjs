@@ -57,15 +57,8 @@ const nextConfig = {
         source: '/ping',
         destination: '/c',
       },
-      // Official Android APK Direct Distribution (routed to analytics-collect edge worker / R2)
-      {
-        source: '/download/analytics-latest.apk',
-        destination: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
-      },
-      {
-        source: '/analytics-latest.apk',
-        destination: 'https://analytics-collect.sufyaanstudio.workers.dev/download/analytics-latest.apk',
-      },
+      // APK served via R2 streaming routes (see app/download/analytics-latest.apk/route.ts)
+      // No rewrites — routes handle Content-Disposition correctly and never 302 to HTML
     ];
   },
 };

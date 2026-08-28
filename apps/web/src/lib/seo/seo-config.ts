@@ -59,11 +59,9 @@ export const SITE_CONFIG = {
     fileSize: '76.0 MB',
     fileSizeBytes: 79653307,
     sha256: 'aef10c9f8be64ffb54df526f0e4e45350a9f504fcb4d2a511a36dfde58ada839',
-    // Same-origin path via Next.js rewrite to Collect R2 (reliable, allows download attribute, no CORS issues)
-    // Previous value was absolute https://analytics-collect... — caused cross-origin download attribute ignored bug
+    // Simple direct static asset — no R2/proxy. File lives at public/download/analytics-latest.apk
     downloadPath: '/download/analytics-latest.apk',
     directApkPath: '/download/analytics-latest.apk',
-    // Absolute fallback for external contexts (e.g., updater manifest when needed)
     absoluteDownloadUrl: `${BASE_URL}/download/analytics-latest.apk`,
     downloadPageUrl: `${BASE_URL}/download`,
     releaseDate: '2026-08-28',

@@ -106,9 +106,10 @@ export const config = {
      * - t.js (tracker script)
      * - c (collect endpoint)
      * - ingest (PostHog proxy → us.i.posthog.com)
+     * - download/*.apk and analytics-latest.apk (direct static APK — skip auth/middleware)
      * NOTE: PostHog proxy must be excluded or matcher will intercept /ingest/e
      * and break ingestion (see https://posthog.com/docs/advanced/proxy/nextjs)
      */
-    '/((?!_next/static|_next/image|favicon.ico|t.js|c|ingest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|t.js|c|ingest|download/.*\\.apk|analytics-latest\\.apk|.*\\.(?:svg|png|jpg|jpeg|gif|webp|apk)$).*)',
   ],
 };

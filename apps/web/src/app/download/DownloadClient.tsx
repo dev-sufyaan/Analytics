@@ -44,28 +44,12 @@ export function DownloadClient() {
     setTimeout(() => setCopiedSha(false), 2500);
   };
 
-  // Reliable download handler: verifies R2 availability via HEAD, then triggers direct same-origin download.
-  // Keeps native <a download> behavior but adds error feedback + fast retry — avoids blob-in-memory for 76MB.
-  const handleDownloadClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Allow default native download to start immediately for speed
-    // Do lightweight HEAD check in parallel for error feedback
+  // Simple direct download — APK is now a static asset at /download/analytics-latest.apk (no R2/proxy).
+  // Native <a download> handles the binary streaming directly via Cloudflare ASSETS.
+  const handleDownloadClick = () => {
     setDownloadError(null);
     setIsDownloading(true);
-    try {
-      const res = await fetch(apkDownloadUrl, { method: 'HEAD', cache: 'no-store' });
-      if (!res.ok) {
-        // Keep native navigation — but surface error after
-        const msg = res.status === 404
-          ? 'APK not yet published to R2. Please try again in a minute or contact support.'
-          : `Download unavailable (HTTP ${res.status}). Retrying...`;
-        setDownloadError(msg);
-        // If HEAD failed, prevent double navigation confusion — let anchor continue, browser will show 404 JSON
-      }
-    } catch {
-      setDownloadError('Network error verifying download. Your download should still start — if not, tap again.');
-    } finally {
-      setTimeout(() => setIsDownloading(false), 3000);
-    }
+    setTimeout(() => setIsDownloading(false), 3000);
   };
 
   const features = [

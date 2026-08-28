@@ -16,6 +16,10 @@ build
 *.aab
 latest.json
 analytics-*.apk
+!apps/web/src/app/download/analytics-latest.apk/
+!apps/web/src/app/analytics-latest.apk/
+!apps/web/src/app/**/*.ts
+!apps/web/src/app/**/*.tsx
 
 # Android signing - never commit real keystore or passwords
 *.keystore
