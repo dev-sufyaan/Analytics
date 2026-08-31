@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/navigation/SiteHeader';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: '404: Resource Not Found · Analytics by Sufyaan Studio',
+  title: '404: Resource Not Found · Analytics',
   description: 'The requested resource was not found. Use our sitemap, llms.txt, or documentation index to find what you need.',
   robots: { index: false, follow: false },
 };

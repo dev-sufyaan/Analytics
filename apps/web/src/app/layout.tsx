@@ -28,6 +28,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.baseUrl),
   applicationName: SITE_CONFIG.name,
+  appleWebApp: {
+    title: SITE_CONFIG.name,
+    capable: true,
+    statusBarStyle: 'default',
+  },
+  manifest: '/manifest.webmanifest',
   title: {
     default: SITE_CONFIG.defaultTitle,
     template: SITE_CONFIG.titleTemplate,

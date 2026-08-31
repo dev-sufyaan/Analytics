@@ -11,7 +11,7 @@ import { getItemListSchema } from '@/lib/seo/json-ld';
 import { ArrowRight, Shield, Zap, Clock, Sparkles, Globe, Smartphone, Lock, Database } from 'lucide-react';
 
 export const metadata = buildMetadata({
-  title: 'Features & Architecture · Analytics by Sufyaan Studio',
+  title: 'Features & Architecture · Analytics',
   description: 'Explore the full feature suite: cookie-free tracking, 1.15 KB tracker, realtime visitors, UTM attribution, public dashboards, Supabase data ownership, and GDPR compliance.',
   path: '/features',
   keywords: [

@@ -11,7 +11,7 @@ import { SITE_CONFIG } from '@/lib/seo/seo-config';
 import { DownloadClient } from './DownloadClient';
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Download Official Android App (Universal APK) · Analytics by Sufyaan Studio',
+  title: 'Download Official Android App (Universal APK) · Analytics',
   description:
     'Download the official high-performance Android APK for Analytics by Sufyaan Studio. 60fps native charts, sub-50ms cold start, hardware keystore biometrics, and zero third-party store tracking.',
   path: '/download',

@@ -4,7 +4,8 @@ export function getOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE_CONFIG.name,
+    name: 'Analytics by Sufyaan Studio',
+    alternateName: ['Analytics', 'Sufyaan Studio Analytics'],
     url: SITE_CONFIG.baseUrl,
     logo: `${SITE_CONFIG.baseUrl}/logo.png`,
     image: `${SITE_CONFIG.baseUrl}/logo.png`,
@@ -21,13 +22,18 @@ export function getWebSiteSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: SITE_CONFIG.name,
+    name: 'Analytics',
+    alternateName: [
+      'Analytics by Sufyaan Studio',
+      'Analytics Studio',
+      'Analytics App',
+    ],
     url: SITE_CONFIG.baseUrl,
     description: SITE_CONFIG.defaultDescription,
     inLanguage: 'en',
     publisher: {
       '@type': 'Organization',
-      name: SITE_CONFIG.name,
+      name: 'Analytics by Sufyaan Studio',
       url: SITE_CONFIG.baseUrl,
       logo: `${SITE_CONFIG.baseUrl}/logo.png`,
     },

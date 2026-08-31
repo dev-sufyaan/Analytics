@@ -11,7 +11,7 @@ import { getItemListSchema } from '@/lib/seo/json-ld';
 import { ArrowRight, Code, Layers } from 'lucide-react';
 
 export const metadata = buildMetadata({
-  title: 'Framework & Platform Integrations · Analytics by Sufyaan Studio',
+  title: 'Framework & Platform Integrations · Analytics',
   description: 'Copy-paste integration guides for Next.js, React, Vue, Nuxt, SvelteKit, Astro, Remix, WordPress, Webflow, Shopify, and HTML5 static websites.',
   path: '/integrations',
   keywords: [

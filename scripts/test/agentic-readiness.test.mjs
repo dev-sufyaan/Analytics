@@ -55,7 +55,7 @@ console.log('✓ Requirement 3 Passed: Standardized JSON error response schema c
 // Test 4: Markdown Content Negotiation (acceptmarkdown.com)
 console.log('Testing Requirement 4: Markdown Content Negotiation...');
 const homeMarkdown = getMarkdownForRoute([]);
-assert.ok(homeMarkdown && homeMarkdown.includes('# Analytics by Sufyaan Studio'), 'Home markdown must render');
+assert.ok(homeMarkdown && homeMarkdown.includes('# Analytics'), 'Home markdown must render');
 
 const pricingMarkdown = getMarkdownForRoute(['pricing']);
 assert.ok(pricingMarkdown && pricingMarkdown.includes('# Pricing & Plans'), 'Pricing markdown must render');
@@ -79,8 +79,9 @@ assert.ok(llmsTxt.includes('Cloudflare Workers'), 'llms.txt must include Cloudfl
 
 // Test 6: Brand Logo & Schema Integration
 console.log('Testing Requirement 6: Logo & Search Engine Schema...');
-import { getOrganizationSchema, getSoftwareApplicationSchema } from '../../apps/web/src/lib/seo/json-ld.ts';
+import { getOrganizationSchema, getWebSiteSchema, getSoftwareApplicationSchema } from '../../apps/web/src/lib/seo/json-ld.ts';
 import { SITE_CONFIG } from '../../apps/web/src/lib/seo/seo-config.ts';
+import manifest from '../../apps/web/src/app/manifest.ts';
 
 const orgSchema = getOrganizationSchema();
 assert.ok(orgSchema.logo.includes('logo.png'), 'Organization logo must point to logo.png');
@@ -90,5 +91,19 @@ const appSchema = getSoftwareApplicationSchema();
 assert.ok(appSchema.image.includes('logo.png'), 'SoftwareApplication image must point to logo.png');
 assert.ok(SITE_CONFIG.logoUrl.includes('logo.png'), 'SITE_CONFIG.logoUrl must point to logo.png');
 console.log('✓ Requirement 6 Passed: Logo asset is integrated into structured data, metadata, and site headers.\n');
+
+// Test 7: Google Search Site Names, WebSite Schema & Manifest
+console.log('Testing Requirement 7: Google Search Site Names & Manifest...');
+const webSiteSchema = getWebSiteSchema();
+assert.equal(webSiteSchema.name, 'Analytics', 'WebSite schema name must be "Analytics" for Google Site Names');
+assert.ok(Array.isArray(webSiteSchema.alternateName), 'WebSite schema must contain alternateName array');
+assert.ok(webSiteSchema.alternateName.includes('Analytics by Sufyaan Studio'), 'alternateName must include full brand name');
+
+const manifestFn = typeof manifest === 'function' ? manifest : manifest?.default || manifest;
+const manifestData = typeof manifestFn === 'function' ? manifestFn() : manifestFn;
+assert.equal(manifestData.name, 'Analytics', 'Manifest name must be "Analytics"');
+assert.equal(manifestData.short_name, 'Analytics', 'Manifest short_name must be "Analytics"');
+assert.ok(manifestData.icons.length >= 3, 'Manifest must provide responsive icon suite');
+console.log('✓ Requirement 7 Passed: Google Site Names structured data and Web App Manifest are configured correctly.\n');
 
 console.log('🎉 ALL IS AGENTIC & SEO READINESS REQUIREMENTS PASSED 100%!');

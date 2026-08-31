@@ -41,6 +41,12 @@ export function buildMetadata({
   );
 
   return {
+    applicationName: SITE_CONFIG.name,
+    appleWebApp: {
+      title: SITE_CONFIG.name,
+      capable: true,
+      statusBarStyle: 'default',
+    },
     title: titleTemplate ?? resolvedTitle,
     description,
     keywords: allKeywords,

@@ -3,17 +3,19 @@
  * Canonical source of truth for SEO, GEO & AEO metadata defaults.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://analytics.sufyaan.studio';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://analytics.sufyaanstudio.workers.dev';
 
 export const SITE_CONFIG = {
-  name: 'Analytics by Sufyaan Studio',
+  name: 'Analytics',
+  fullName: 'Analytics by Sufyaan Studio',
   shortName: 'Analytics',
-  domain: 'analytics.sufyaan.studio',
+  alternateNames: ['Analytics by Sufyaan Studio', 'Analytics Studio', 'Analytics App'],
+  domain: 'analytics.sufyaanstudio.workers.dev',
   baseUrl: BASE_URL,
   entityStatement:
     'Analytics by Sufyaan Studio is a best-in-class, privacy-first website analytics platform engineered for modern web developers, SaaS founders, and creators. Featuring a sub-1.5 KB featherlight tracker, instant edge ingestion on Cloudflare Workers, 100% cookie-free visitor identification via daily-salted hashes, real-time live traffic feeds, and complete data ownership on Supabase Postgres.',
-  defaultTitle: 'Analytics by Sufyaan Studio — Privacy-First Website Analytics',
-  titleTemplate: '%s · Analytics by Sufyaan Studio',
+  defaultTitle: 'Analytics — Privacy-First Website Analytics',
+  titleTemplate: '%s · Analytics',
   defaultDescription:
     'Best-in-class privacy-first website analytics. No cookies. No consent banners needed. 1.15 KB lightweight tracker, instant edge ingestion, realtime visitor feeds, and full data ownership.',
   keywords: [
